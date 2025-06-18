@@ -1,67 +1,98 @@
+// Device tree overlay for VocalFusion
 /dts-v1/;
 /plugin/;
 
 / {
-	compatible = "brcm,bcm2835";
+    compatible = "brcm,bcm2835";
 
     fragment@0 {
-        target-path = "/";
+        target = <&sound>;
         __overlay__ {
-            vocalfusion_device: vocalfusion-device {
-                compatible = "simple-audio-card";
-                simple-audio-card,name = "VocalFusion Device";
-                status = "okay";
+            compatible = "simple-audio-card";
+            simple-audio-card,name = "VocalFusion Device";
+            status = "okay";
 
-                simple-audio-card,dai-link {
-                    // https://github.com/raspberrypi/linux/blob/rpi-6.1.y/Documentation/devicetree/bindings/sound/simple-card.yaml
-                    format = "i2s";
-                    bitclock-master = <&codec_dai>;
-                    frame-master = <&codec_dai>;
+            // Capture
+            cap: simple-audio-card,dai-link@0 {
+                format = "i2s";
 
-                    cpu_dai: cpu {
-                        sound-dai = <&i2s>;
-                    };
+                //! TODO: figure out a way to set up with either. 
+                // rpi as master
+                bitclock-master = <&cap_cpu>;
+                frame-master = <&cap_cpu>;
+                
+                // rpi as slave
+                // bitclock-master = <&cap_codec>;
+                // frame-master = <&cap_codec>;
+                
+                cap_cpu: cpu {
+                    sound-dai = <&i2s>;
+                    
+                    // stereo
+                    dai-tdm-slot-num = <2>;
+                    dai-tdm-slot-width = <32>;
+                };
 
-                    codec_dai: codec {
-                        sound-dai = <&dummy_codec>;
-                    };
+                cap_codec: codec {
+                    sound-dai = <&cap_codec>;
                 };
             };
 
-            dummy_codec: vocalfusion-dummy-codec {
-                compatible = "linux,snd-soc-dummy";
-                #sound-dai-cells = <0>;
-                status = "okay";
+            // Playback
+            play: simple-audio-card,dai-link@1 {
+                format = "i2s";
+
+                //! todo: figure out a way to set up with either. 
+                // rpi as master
+                bitclock-master = <&play_cpu>;
+                frame-master = <&play_cpu>;
+                
+                // rpi as slave
+                // bitclock-master = <&play_codec>;
+                // frame-master = <&play_codec>;
+                
+                play_cpu: cpu {
+                    sound-dai = <&i2s>;
+                    
+                    // stereo
+                    dai-tdm-slot-num = <2>;
+                    dai-tdm-slot-width = <32>;
+                };
+
+                play_codec: codec {
+                    sound-dai = <&play_codec>;
+                };
             };
         };
     };
 
     fragment@1 {
-        target = <&i2s>;
+        target-path = "/";
         __overlay__ {
-            // https://www.kernel.org/doc/Documentation/devicetree/bindings/pinctrl/pinctrl-bindings.txt
-            status = "okay";
-            #sound-dai-cells = <0>;
-            pinctrl-names = "default";
-            pinctrl-0 = <&i2s_pins>;
-        };
-    };
+            // Uses S/PDIF codec as a generic I2S driver.
+            cap_codec: spdif-receiver {
+                compatible = "linux,spdif-dir";
+                status = "okay";
+                #address-cells = <0>;
+                #size-cells = <0>;
+                #sound-dai-cells = <0>;
+            };
 
-    fragment@2 {
-        target = <&gpio>;
-        __overlay__ {
-            // https://www.kernel.org/doc/Documentation/devicetree/bindings/pinctrl/brcm%2Cbcm2835-gpio.txt
-            i2s_pins: i2s_pins {
-                brcm,pins = <18 19 20 21>;
-                brcm,function = <4>; // alt-0
-                brcm,pull = <0>;
+            play_codec: spdif-transmitter {
+                compatible = "linux,spdif-dit";
+                status = "okay";
+                #address-cells = <0>;
+                #size-cells = <0>;
+                #sound-dai-cells = <0>;
             };
         };
     };
 
-    __overrides__ {
-        master = <&codec_dai>,"bitclock-master?",
-                 <&codec_dai>,"frame-master?";
-        card_name = <&vocalfusion_device>,"simple-audio-card,name";
+    fragment@2 {
+        target = <&i2s>;
+        __overlay__ {
+            status = "okay";
+            #sound-dai-cells = <0>;
+        };
     };
 };
