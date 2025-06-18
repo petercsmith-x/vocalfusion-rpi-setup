@@ -1,0 +1,98 @@
+// Device tree overlay for VocalFusion
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2835";
+
+    fragment@0 {
+        target = <&sound>;
+        __overlay__ {
+            compatible = "simple-audio-card";
+            simple-audio-card,name = "XMOS Device";
+            status = "okay";
+
+            // Capture
+            cap: simple-audio-card,dai-link@0 {
+                format = "i2s";
+
+                //! TODO: figure out a way to set up with either. 
+                // rpi as master
+                bitclock-master = <&cap_cpu>;
+                frame-master = <&cap_cpu>;
+                
+                // rpi as slave
+                // bitclock-master = <&cap_codec>;
+                // frame-master = <&cap_codec>;
+                
+                cap_cpu: cpu {
+                    sound-dai = <&i2s>;
+                    
+                    // stereo
+                    dai-tdm-slot-num = <2>;
+                    dai-tdm-slot-width = <32>;
+                };
+
+                cap_codec: codec {
+                    sound-dai = <&c_codec>;
+                };
+            };
+
+            // Playback
+            play: simple-audio-card,dai-link@1 {
+                format = "i2s";
+
+                //! TODO: figure out a way to set up with either. 
+                // rpi as master
+                bitclock-master = <&play_cpu>;
+                frame-master = <&play_cpu>;
+                
+                // rpi as slave
+                // bitclock-master = <&play_codec>;
+                // frame-master = <&play_codec>;
+                
+                play_cpu: cpu {
+                    sound-dai = <&i2s>;
+                    
+                    // stereo
+                    dai-tdm-slot-num = <2>;
+                    dai-tdm-slot-width = <32>;
+                };
+
+                play_codec: codec {
+                    sound-dai = <&p_codec>;
+                };
+            };
+        };
+    };
+
+    fragment@1 {
+        target-path = "/";
+        __overlay__ {
+            // Uses S/PDIF codec as a generic I2S driver.
+            c_codec: spdif-receiver {
+                compatible = "linux,spdif-dir";
+                status = "okay";
+                #address-cells = <0>;
+                #size-cells = <0>;
+                #sound-dai-cells = <0>;
+            };
+
+            p_codec: spdif-transmitter {
+                compatible = "linux,spdif-dit";
+                status = "okay";
+                #address-cells = <0>;
+                #size-cells = <0>;
+                #sound-dai-cells = <0>;
+            };
+        };
+    };
+
+    fragment@2 {
+        target = <&i2s>;
+        __overlay__ {
+            status = "okay";
+            #sound-dai-cells = <0>;
+        };
+    };
+};
