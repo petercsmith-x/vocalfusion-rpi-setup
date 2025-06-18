@@ -34,7 +34,7 @@
                 };
 
                 cap_codec: codec {
-                    sound-dai = <&cap_codec>;
+                    sound-dai = <&c_codec>;
                 };
             };
 
@@ -42,7 +42,7 @@
             play: simple-audio-card,dai-link@1 {
                 format = "i2s";
 
-                //! todo: figure out a way to set up with either. 
+                //! TODO: figure out a way to set up with either. 
                 // rpi as master
                 bitclock-master = <&play_cpu>;
                 frame-master = <&play_cpu>;
@@ -60,7 +60,7 @@
                 };
 
                 play_codec: codec {
-                    sound-dai = <&play_codec>;
+                    sound-dai = <&p_codec>;
                 };
             };
         };
@@ -70,7 +70,7 @@
         target-path = "/";
         __overlay__ {
             // Uses S/PDIF codec as a generic I2S driver.
-            cap_codec: spdif-receiver {
+            c_codec: spdif-receiver {
                 compatible = "linux,spdif-dir";
                 status = "okay";
                 #address-cells = <0>;
@@ -78,7 +78,7 @@
                 #sound-dai-cells = <0>;
             };
 
-            play_codec: spdif-transmitter {
+            p_codec: spdif-transmitter {
                 compatible = "linux,spdif-dit";
                 status = "okay";
                 #address-cells = <0>;
