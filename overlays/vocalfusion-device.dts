@@ -12,7 +12,7 @@
                 simple-audio-card,name = "snd_rpi_simple_card";
                 status = "okay";
 
-                simple-audio-card,dai-link@0 {
+                simple-audio-card,dai-link {
                     // https://github.com/raspberrypi/linux/blob/rpi-6.1.y/Documentation/devicetree/bindings/sound/simple-card.yaml
                     format = "i2s";
                     bitclock-master = <&codec_dai>;
@@ -54,7 +54,7 @@
             i2s_pins: i2s_pins {
                 brcm,pins = <18 19 20 21>;
                 brcm,function = <4>; // alt-0
-                bcrm,pull = <0>;
+                brcm,pull = <0>;
             };
         };
     };
