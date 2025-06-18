@@ -7,9 +7,9 @@
     fragment@0 {
         target-path = "/";
         __overlay__ {
-            snd_rpi_simple_card: snd_rpi_simple_card {
+            vocalfusion_device: vocalfusion_device {
                 compatible = "simple-audio-card";
-                simple-audio-card,name = "snd_rpi_simple_card";
+                simple-audio-card,name = "VocalFusion Device";
                 status = "okay";
 
                 simple-audio-card,dai-link {
@@ -62,6 +62,6 @@
     __overrides__ {
         master = <&codec_dai>,"bitclock-master?",
                  <&codec_dai>,"frame-master?";
-        card_name = <&snd_rpi_simple_card>,"simple-audio-card,name";
+        card_name = <&vocalfusion_device>,"simple-audio-card,name";
     };
 };
