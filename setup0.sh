@@ -25,24 +25,24 @@ usage() {
 }
 
 error() {
-    echo -e "\033[0;31m[ERROR]\033[0m $1"
+    echo -e "\033[0;31m[ERROR]\033[0m $1" >&2
 }
 
 warn() {
     if [[ $DEBUG -gt 0 ]]; then
-        echo -e "\033[0;33m[WARN]\033[0m $1"
+        echo -e "\033[0;33m[WARN]\033[0m $1" >&2
     fi
 }
 
 info() {
     if [[ $DEBUG -gt 1 ]]; then
-        echo -e "\033[0;34m[INFO]\033[0m $1"
+        echo -e "\033[0;34m[INFO]\033[0m $1" >&2
     fi
 }
 
 trace() {
     if [[ $DEBUG -gt 2 ]]; then
-        echo -e "\033[0;36m[TRACE]\033[0m $1"
+        echo -e "\033[0;36m[TRACE]\033[0m $1" >&2
     fi
 }
 
