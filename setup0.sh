@@ -89,7 +89,10 @@ for ((attempt=1; attempt <= max_install_attempts; attempt++)); do
         break
     fi
 
-    sleep $((attempt * 2))
+    # Increasingly sleep between attempts
+    if [[ ! $attempt -eq $max_install_attempts ]]; then
+        sleep $((attempt * 2))
+    fi
 done
 
 # Check for failed package installations
@@ -101,7 +104,7 @@ done
 
 # Output failed packages
 if [[ ${#failed_packages[@]} -gt 0 ]]; then
-    echo "ERROR: Failed to install the following packages after $max_install_attempts:" >&2
+    echo "ERROR: Failed to install the following packages after $max_install_attempts attempts:" >&2
     printf ' - %s\n' "${failed_packages[@]}" >&2
     echo "Please check network connection and package names, then try again." >&2
     exit 1
