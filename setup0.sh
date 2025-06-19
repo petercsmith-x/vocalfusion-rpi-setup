@@ -82,6 +82,16 @@ fi
 # Enable SPI
 sudo raspi-config nonint do_spi 0
 
+# Install required packages
+for ((attempt=1; attempt <= max_install_attempts; attempt++)); do
+    # Attempt to install all packages
+    if sudo apt-get install -y "${packages[*]}"; then
+        break
+    fi
+
+    sleep $((attempt * 2))
+done
+
 # TODO: Test and make different configurations for devices
 # Install VocalFusion devicetree overlay
 make -C $rpi_setup_dir/overlays install
