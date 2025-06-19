@@ -6,7 +6,7 @@ rpi_setup_dir=$(pwd -P)
 
 i2s_mode=
 xmos_device=
-max_install_attempts=
+max_install_attempts=3
 valid_xmos_devices=(xvf3800-intdev xvf3800-inthost)
 
 packages=(python3-matplotlib python3-numpy libatlas-base-dev audacity libreadline-dev libncurses-dev)
@@ -22,7 +22,7 @@ usage() {
     printf "%s\n" \
         'This script sets up the Raspberry Pi to use different XMOS devices.' \
         "USAGE: $0 <device-type>" \
-        "The device-type is the XMOS device to set up. Valid types: $devices_display_string"
+        "The device-type is the XMOS device to set up. Valid types: $devices_display_string" >&2
 }
 
 if [[ $# -eq 1 ]]; then
@@ -30,7 +30,7 @@ if [[ $# -eq 1 ]]; then
 
     # Check if the input device is valid and output usage if not
     if [[ ! " ${valid_xmos_devices[@]} " =~ " $xmos_device " ]]; then
-        echo "ERROR: $xmos_device is not a valid device type."
+        echo "ERROR: $xmos_device is not a valid device type." >&2
         echo
         usage
         exit 1
@@ -55,7 +55,7 @@ case $xmos_device in
         ;;
     *)
         # This shouldn't happen as we've already validated the input device
-        echo "ERROR: Unknown XMOS device type $xmos_device."
+        echo "ERROR: Unknown XMOS device type $xmos_device." >&2
         echo
         usage
         exit 1
@@ -85,12 +85,27 @@ sudo raspi-config nonint do_spi 0
 # Install required packages
 for ((attempt=1; attempt <= max_install_attempts; attempt++)); do
     # Attempt to install all packages
-    if sudo apt-get install -y "${packages[*]}"; then
+    if sudo apt-get install -y ${packages[*]}; then
         break
     fi
 
     sleep $((attempt * 2))
 done
+
+# Check for failed package installations
+for package in ${packages[@]}; do
+    if ! dpkg -s $package &>/dev/null; then
+        failed_packages+=($package)
+    fi
+done
+
+# Output failed packages
+if [[ ${#failed_packages[@]} -gt 0 ]]; then
+    echo "ERROR: Failed to install the following packages after $max_install_attempts:" >&2
+    printf ' - %s\n' "${failed_packages[@]}" >&2
+    echo "Please check network connection and package names, then try again." >&2
+    exit 1
+fi
 
 # TODO: Test and make different configurations for devices
 # Install VocalFusion devicetree overlay
