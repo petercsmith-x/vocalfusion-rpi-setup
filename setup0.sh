@@ -42,7 +42,7 @@ info() {
 
 trace() {
     if [[ $DEBUG -gt 2 ]]; then
-        echo -e "\003[0;36m[TRACE]\033[0m $1"
+        echo -e "\033[0;36m[TRACE]\033[0m $1"
     fi
 }
 
