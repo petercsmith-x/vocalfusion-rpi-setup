@@ -99,7 +99,7 @@ info "Enabled I2S devicetree in $rpi_config."
 # Enable I2C devicetree
 sudo raspi-config nonint do_i2c 1
 sudo raspi-config nonint do_i2c 0
-info "Toggled I2C devicetree."
+info "Enabled I2C devicetree."
 
 # Set I2C baudrate to 100k
 if ! grep -q '^dtparam=i2c_arm_baudrate=100000$' "$rpi_config"; then
