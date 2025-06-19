@@ -6,22 +6,17 @@ rpi_setup_dir=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd -P)
 i2s_mode=
 xmos_device=
 max_install_attempts=3
-valid_xmos_devices=(xvf3800-intdev xvf3800-inthost)
+valid_xmos_devices=(xvf3800-intdev)
+printf -v devices_display_string '%s, ' "${valid_xmos_devices[@]}"
+devices_display_string="${devices_display_string%, }"
 
 packages=(python3-matplotlib python3-numpy libatlas-base-dev audacity libreadline-dev libncurses-dev)
 
 # TODO: No ua devices currently supported
 # packages_ua=(libusb-1.0-0-dev libevdev-dev libudev-dev)
 
-usage() {
-    # Get devices as a nice comma separated string
-    printf -v devices_display_string '%s, ' "${valid_xmos_devices[@]}"
-    devices_display_string="${devices_display_string%, }"
-
-    printf "%s\n" \
-        'This script sets up the Raspberry Pi to use different XMOS devices.' \
-        "USAGE: $0 <device-type>" \
-        "The device-type is the XMOS device to set up. Valid types: $devices_display_string" >&2
+hint() {
+    echo -e "\033[0;95m[HINT]\033[0m $1" >&2
 }
 
 error() {
@@ -29,53 +24,115 @@ error() {
 }
 
 warn() {
-    if [[ $DEBUG -gt 0 ]]; then
+    if [[ $debug -gt 0 ]]; then
         echo -e "\033[0;33m[WARN]\033[0m $1" >&2
     fi
 }
 
 info() {
-    if [[ $DEBUG -gt 1 ]]; then
+    if [[ $debug -gt 1 ]]; then
         echo -e "\033[0;34m[INFO]\033[0m $1" >&2
     fi
 }
 
 trace() {
-    if [[ $DEBUG -gt 2 ]]; then
+    if [[ $debug -gt 2 ]]; then
         echo -e "\033[0;36m[TRACE]\033[0m $1" >&2
     fi
 }
 
-if [[ $# -eq 1 ]]; then
-    xmos_device=$1
+usage() {
+    # TODO: add long args
+    printf '%s\n' \
+        'This script sets up the Raspberry Pi to use different XMOS devices.' \
+        "Usage: $0 -d <device-type> [-v]" \
+        "Options:" \
+        "    -d <device-type>  Specify XMOS device type ($devices_display_string)" \
+        "    -v                Increase verbosity (multiple for more detail)" \
+        "    -h                Show this help message" >&2
+}
 
-    # Check if the input device is valid and output usage if not
-    if [[ ! " ${valid_xmos_devices[@]} " =~ " $xmos_device " ]]; then
-        error "$xmos_device is not a valid device type." >&2
-        echo
-        usage
-        exit 1
-    fi
-
-    info "Got device name: $xmos_device"
-else
+# Parse args
+temp_err=$(mktemp)
+if ! OPTS=$(getopt -o hd:v --long help,device:,verbose -n "$0" -- "$@" 2>"$temp_err"); then
+    while IFS=: read -r err_line; do
+        error "$(sed 's/.*: //' <<< "$err_line")"
+    done < "$temp_err"
+    rm -f "$temp_err"
+    echo
     usage
     exit 1
 fi
 
+# Clean up temp file if we succeeded
+rm -f "$temp_err"
+
+# FIXME? - eval
+eval set -- "$OPTS"
+
+# TODO: add rate control
+while true; do
+    case $1 in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -d|--device)
+            xmos_device="$2"
+            shift 2
+            ;;
+        -v|--verbose)
+            ((debug++))
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            error "Invalid option: $1"
+            echo
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+shift $((OPTIND -1))
+
+# Check for unexpected arguments
+if [[ $# -gt 0 ]]; then
+    error "Unexpected arguments: $@"
+    echo
+    usage
+    exit 1
+fi
+
+# Check for required argument
+if [[ -z "$xmos_device" ]]; then
+    error "Device type (-d) is required."
+    echo
+    usage
+    exit 1
+fi
+
+# Check valid device
+if [[ ! " ${valid_xmos_devices[@]} " =~ " $xmos_device " ]]; then
+    error "Invalid device type: $xmos_device"
+    hint "Valid device types: $devices_display_string"
+    exit 1
+fi
+
+# Select device options
 case $xmos_device in
     xvf3800-intdev)
         i2s_mode=master
         io_exp_and_dac_setup=y
         asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_dto
         ;;
-    xvf3800-inthost)
-        i2s_mode=slave
-        io_exp_and_dac_setup=y
-        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_dto
-        ;;
     *)
         # This shouldn't happen as we've already validated the input device
+        error "UNREACHABLE REACHED."
         error "Unknown XMOS device type $xmos_device." >&2
         echo
         usage
