@@ -43,15 +43,13 @@ fi
 case $xmos_device in
     xvf3800-intdev)
         i2s_mode=master
-        # TODO: is this needed?
         io_exp_and_dac_setup=y
-        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf
+        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_dto
         ;;
     xvf3800-intdev)
         i2s_mode=slave
-        # TODO: is this needed?
         io_exp_and_dac_setup=y
-        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf
+        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_dto
         ;;
     *)
         # This shouldn't happen as we've already validated the input device
@@ -72,6 +70,7 @@ sudo sed -i '/^dtparam=audio=on$/ s/^/#/' "$rpi_config"
 sudo sed -i '/^#dtparam=i2s=on$/s/^#//' "$rpi_config"
 
 # Enable I2C devicetree
+sudo raspi-config nonint do_i2c 1
 sudo raspi-config nonint do_i2c 0
 
 # Set I2C baudrate to 100k
@@ -80,6 +79,7 @@ if ! grep -q '^dtparam=i2c_arm_baudrate=100000$' "$rpi_config"; then
 fi
 
 # Enable SPI
+sudo raspi-config nonint do_spi 1
 sudo raspi-config nonint do_spi 0
 
 # Install required packages
@@ -136,7 +136,7 @@ if [[ -e /usr/share/alsa/pulse-alsa.conf ]]; then
 fi
 
 # Check XMOS device for asoundrc selection.
-if [[ -z $asoundrc_template ]]; then
+if [[ -z "$asoundrc_template" ]]; then
   echo "ERROR: sound card config not known for XMOS device $xmos_device." >&2
   exit 1
 fi
@@ -206,16 +206,16 @@ fi
 
 # Regenerate crontab file with new commands
 crontab_file=$rpi_setup_dir/resources/crontab
-if [ -n "$usb_mode" ]; then
+if [[ -n "$usb_mode" ]]; then
     crontab_file="${crontab_file}_usb"
-elif [ -n "$i2s_mode" ]; then
+elif [[ -n "$i2s_mode" ]]; then
     crontab_file="${crontab_file}_i2s_${i2s_mode}"
 fi
 
 rm -f $crontab_file
 
 # Setup the crontab to restart I2S at reboot
-if [ -n "$i2s_mode" ] || [ -n "$io_exp_and_dac_setup" ]; then
+if [[ -n "$i2s_mode" ]] || [[ -n "$io_exp_and_dac_setup" ]]; then
   if [[ -n "$i2s_mode" ]]; then
     echo "@reboot sh $i2s_setup_script" >> $crontab_file
   fi

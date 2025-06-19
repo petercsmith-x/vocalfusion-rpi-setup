@@ -6,7 +6,9 @@ vocalfusion-device.dtbo: vocalfusion-device.dts
 
 install: vocalfusion-device.dtbo
 	sudo cp vocalfusion-device.dtbo /boot/overlays
-	echo "dtoverlay=vocalfusion-device" | sudo tee -a /boot/config.txt
+	if ! grep -q '^dtoverlay=vocalfusion-device$$' /boot/config.txt; then \
+		echo "dtoverlay=vocalfusion-device" | sudo tee -a /boot/config.txt; \
+	fi
 
 uninstall:
 	sudo sed -i '/dtoverlay=vocalfusion-device/d' /boot/config.txt
