@@ -164,7 +164,7 @@ if [[ -n $i2s_mode ]]; then
     # wait a bit as it doesn't work otherwise, this is probably caused
     # by the same process that is deleting .asoundrc
     echo "sleep 15"                                         >> $i2s_setup_script
-    echo "arecord -Dhw:sndrpisimplecar,0 -c2 -fS32_LE -r48000 -s1 /dev/null" >> $i2s_setup_script
+    echo "arecord -Dhw:CARD=Device,DEV=0 -c2 -fS32_LE -r48000 -s1 /dev/null" >> $i2s_setup_script
     echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_bclk" >> $i2s_setup_script
   fi
 fi
@@ -222,7 +222,6 @@ if [ -n "$i2s_mode" ] || [ -n "$io_exp_and_dac_setup" ]; then
   if [[ -n "$io_exp_and_dac_setup" ]]; then
     echo "@reboot sh $dac_and_clks_script" >> $crontab_file
   fi
-popd > /dev/null
 fi
 
 # Setup the crontab to copy the .asoundrc file at reboot
