@@ -46,7 +46,7 @@ case $xmos_device in
         io_exp_and_dac_setup=y
         asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_dto
         ;;
-    xvf3800-intdev)
+    xvf3800-inthost)
         i2s_mode=slave
         io_exp_and_dac_setup=y
         asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_dto
