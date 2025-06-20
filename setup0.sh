@@ -6,6 +6,7 @@ rpi_setup_dir=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd -P)
 i2s_mode=
 xmos_device=
 rate=48000
+no_update=
 max_install_attempts=3
 valid_xmos_devices=(xvf3800-intdev)
 printf -v devices_display_string '%s, ' "${valid_xmos_devices[@]}"
@@ -50,12 +51,13 @@ usage() {
         "Options:" \
         "    -v|--verbose      Increase verbosity (multiple for more detail)." \
         "    -h|--help         Show this help message." \
-        "    -r|--rate <rate>  Set the sample rate to use (Hz), must match the rate of the XMOS software (default: 48000)." >&2
+        "    -r|--rate <rate>  Set the sample rate to use (Hz), must match the rate of the XMOS software (default: 48000)." \
+        "    -N|--no-update    Don't update the Raspberry Pi's packages." >&2
 }
 
 # Parse args
 temp_err=$(mktemp)
-if ! OPTS=$(getopt -o hvr: --long help,verbose,rate -n "$0" -- "$@" 2>"$temp_err"); then
+if ! OPTS=$(getopt -o hvr:N --long help,verbose,rate,no-update -n "$0" -- "$@" 2>"$temp_err"); then
     while IFS=: read -r err_line; do
         error "$(sed 's/.*: //' <<< "$err_line")"
     done < "$temp_err"
@@ -70,7 +72,6 @@ rm -f "$temp_err"
 
 eval set -- "$OPTS"
 
-# TODO: add rate control
 while true; do
     case $1 in
         -h|--help)
@@ -84,6 +85,10 @@ while true; do
         -r|--rate)
             rate="${2,,}"
             shift 2
+            ;;
+        -n|--no-update)
+            no_update=y
+            shift
             ;;
         --)
             shift
@@ -187,22 +192,26 @@ sudo raspi-config nonint do_spi 0
 info "Enabled SPI."
 
 # Update system
-info "Updating packages..."
-for ((attempt=1; attempt <= max_install_attempts; attempt++)); do
-    # Attempt to update system
-    if sudo apt-get update -y; then
-        if sudo apt-get upgrade -y; then
-            break
+if [[ -z $no_update ]]; then
+    info "Updating packages..."
+    for ((attempt=1; attempt <= max_install_attempts; attempt++)); do
+        # Attempt to update system
+        if sudo apt-get update -y; then
+            if sudo apt-get upgrade -y; then
+                break
+            fi
         fi
-    fi
 
-    warn "Failed to upgrade required packages, attempt $attempt / $max_install_attempts"
+        warn "Failed to upgrade required packages, attempt $attempt / $max_install_attempts"
 
-    if [[ $attempt -eq $max_install_attempts ]]; then
-        error "Failed to update and upgrade packages."
-        hint "Run `sudo apt upgrade` and `sudo apt update` manually, troubleshoot, then try again."
-    fi
-done
+        if [[ $attempt -eq $max_install_attempts ]]; then
+            error "Failed to update and upgrade packages."
+            hint "Run `sudo apt upgrade` and `sudo apt update` manually, troubleshoot, then try again."
+        fi
+    done
+else
+    info "Skipping update as --no-update used."
+fi
 
 
 # Install required packages
