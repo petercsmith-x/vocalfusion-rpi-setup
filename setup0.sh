@@ -278,8 +278,8 @@ if [[ -n $i2s_mode ]]; then
         # wait a bit as it doesn't work otherwise, this is probably caused
         # by the same process that is deleting .asoundrc
         echo "sleep 15"                                         >> $i2s_setup_script
-        echo "arecord -Dhw:CARD=Device,DEV=0 -c2 -fS32_LE -r48000 -s1 /dev/null" >> $i2s_setup_script
-        echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_bclk" >> $i2s_setup_script
+        echo "arecord -Dhw:CARD=Device,DEV=0 -c2 -fS32_LE -r$rate -s1 /dev/null" >> $i2s_setup_script
+        echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_bclk $rate" >> $i2s_setup_script
     fi
 fi
 
@@ -297,8 +297,8 @@ if [[ -n "$io_exp_and_dac_setup" ]]; then
   # Configure the clocks only if RaspberryPi is configured as I2S master
   if [[ "$i2s_mode" = "master" ]]; then
     info "I2S mode is $i2s_mode, adding clock configuration to script."
-    echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_mclk"   >> $dac_and_clks_script
-    echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_bclk"   >> $dac_and_clks_script
+    echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_mclk $rate"   >> $dac_and_clks_script
+    echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_bclk $rate"   >> $dac_and_clks_script
   fi
   
   # Note that only the substring xvfXXXX from $xmos_device is used in the lines below
@@ -317,7 +317,7 @@ if [[ -n "$io_exp_and_dac_setup" ]]; then
   echo "sleep 5" >> $audacity_script
   if [[ "$i2s_mode" = "master" ]]; then
     info "I2S mode is $i2s_mode, adding clock configuration to script."
-    echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_bclk >> /dev/null" >> $audacity_script
+    echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_bclk $rate >> /dev/null" >> $audacity_script
   fi
   sudo chmod +x $audacity_script
 
