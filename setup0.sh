@@ -86,7 +86,7 @@ while true; do
             rate="${2,,}"
             shift 2
             ;;
-        -n|--no-update)
+        -N|--no-update)
             no_update=y
             shift
             ;;
