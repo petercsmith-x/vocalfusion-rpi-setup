@@ -4,7 +4,7 @@ pcm.playback_hw {
     device 0
     format S32_LE
     channels 2
-    rate 48000
+    rate {{rate}}
 }
 
 pcm.capture_hw {
@@ -13,7 +13,7 @@ pcm.capture_hw {
     device 1
     format S32_LE
     channels 2
-    rate 48000
+    rate {{rate}}
 }
 
 pcm.VF_Playback {

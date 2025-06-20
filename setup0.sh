@@ -5,6 +5,7 @@ rpi_setup_dir=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd -P)
 
 i2s_mode=
 xmos_device=
+rate=48000
 max_install_attempts=3
 valid_xmos_devices=(xvf3800-intdev)
 printf -v devices_display_string '%s, ' "${valid_xmos_devices[@]}"
@@ -42,19 +43,19 @@ trace() {
 }
 
 usage() {
-    # TODO: add long args
     printf '%s\n' \
         'This script sets up the Raspberry Pi to use different XMOS devices.' \
-        "Usage: $0 -d <device-type> [-v]" \
+        "Usage: $0 <device-type> [OPTIONS]" \
+        "Valid device types: $devices_display_string" \
         "Options:" \
-        "    -d <device-type>  Specify XMOS device type ($devices_display_string)" \
-        "    -v                Increase verbosity (multiple for more detail)" \
-        "    -h                Show this help message" >&2
+        "    -v|--verbose      Increase verbosity (multiple for more detail)." \
+        "    -h|--help         Show this help message." \
+        "    -r|--rate <rate>  Set the sample rate to use (Hz), must match the rate of the XMOS software (default: 48000)." >&2
 }
 
 # Parse args
 temp_err=$(mktemp)
-if ! OPTS=$(getopt -o hd:v --long help,device:,verbose -n "$0" -- "$@" 2>"$temp_err"); then
+if ! OPTS=$(getopt -o hvr: --long help,verbose,rate -n "$0" -- "$@" 2>"$temp_err"); then
     while IFS=: read -r err_line; do
         error "$(sed 's/.*: //' <<< "$err_line")"
     done < "$temp_err"
@@ -67,7 +68,6 @@ fi
 # Clean up temp file if we succeeded
 rm -f "$temp_err"
 
-# FIXME? - eval
 eval set -- "$OPTS"
 
 # TODO: add rate control
@@ -77,13 +77,13 @@ while true; do
             usage
             exit 0
             ;;
-        -d|--device)
-            xmos_device="$2"
-            shift 2
-            ;;
         -v|--verbose)
             ((debug++))
             shift
+            ;;
+        -r|--rate)
+            rate="$2"
+            shift 2
             ;;
         --)
             shift
@@ -101,16 +101,17 @@ done
 shift $((OPTIND -1))
 
 # Check for unexpected arguments
-if [[ $# -gt 0 ]]; then
-    error "Unexpected arguments: $@"
+if [[ $# -lt 1 ]]; then
+    error "Device type is required."
     echo
     usage
     exit 1
 fi
 
-# Check for required argument
-if [[ -z "$xmos_device" ]]; then
-    error "Device type (-d) is required."
+xmos_device="$1"
+
+if [[ $# -gt 1 ]]; then
+    error "Unexpected arguments, expected 1, got $#"
     echo
     usage
     exit 1
@@ -140,7 +141,7 @@ case $xmos_device in
         ;;
 esac
 
-info "i2s_mode: $i2s_mode, io_exp_and_dac_setup: $io_exp_and_dac_setup, asoundrc_template: $asoundrc_template"
+info "i2s_mode: $i2s_mode, io_exp_and_dac_setup: $io_exp_and_dac_setup, asoundrc_template: $asoundrc_template, rate: $rate"
 
 # Begin setting up RasPi
 rpi_config=/boot/config.txt
@@ -239,6 +240,11 @@ if [[ -z "$asoundrc_template" ]]; then
   error "Sound card config not known for XMOS device $xmos_device." >&2
   exit 1
 fi
+
+# Create new asoundrc with specified rate
+info "Generating asoundrc with specified rate at ${asoundrc_template}_$rate"
+sed "s/{{rate}}/$rate/g" "$asoundrc_template" > "${asoundrc_template}_$rate"
+asoundrc_template="${asoundrc_template}_$rate"
 
 # Copy asoundrc config to correct location
 info "Copying asoundrc: $asoundrc_template to ~/.asoundrc"
