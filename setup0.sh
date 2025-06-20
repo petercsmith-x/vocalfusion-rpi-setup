@@ -168,7 +168,19 @@ esac
 debug "i2s_mode: $i2s_mode, io_exp_and_dac_setup: $io_exp_and_dac_setup, asoundrc_template: $asoundrc_template, rate: $rate"
 
 # Begin setting up RasPi
-rpi_config=/boot/config.txt
+rpi_config_root=
+if [[ -f '/boot/firmware/config.txt' ]]; then
+    info "Config found at /boot/firmware/config.txt"
+    rpi_config_root=/boot/firmware
+elif [[ -f '/boot/config.txt' ]]; then
+    info "Config found at /boot/config.txt"
+    rpi_config_root=/boot
+else
+    error "Couldn't find Raspberry Pi configuration file."
+    hint "Check if either /boot/config.txt and /boot/firmware/config.txt exist."
+    exit 1
+fi
+rpi_config="$rpi_config_root/config.txt"
 
 # Disable built-in audio
 sudo sed -i '/^dtparam=audio=on$/ s/^/#/' "$rpi_config"
@@ -254,9 +266,9 @@ if [[ ${#failed_packages[@]} -gt 0 ]]; then
 fi
 
 # TODO: Test and make different configurations for devices if required
-# Install VocalFusion devicetree overlay
-info "Making and installing VocalFusion DTO."
-make -C $rpi_setup_dir/overlays install
+# Install XMOS devicetree overlay
+info "Making and installing XMOS DTO."
+RPI_CONFIG_ROOT=$rpi_config_root make -C $rpi_setup_dir/overlays install
 
 # Enable XMOS devicetree overlay
 info "Enabling DTO now."
