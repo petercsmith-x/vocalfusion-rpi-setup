@@ -404,7 +404,7 @@ info "Updating crontab with new file."
 crontab $crontab_file
 
 # Need to reboot
-echo "To apply changes, this Raspberry Pi must be rebooted."
+info "To apply changes, this Raspberry Pi must be rebooted."
 read -rp "Reboot now to apply changes? [Y/n] " answer
 case "${answer,,}" in
     y|yes|"")
