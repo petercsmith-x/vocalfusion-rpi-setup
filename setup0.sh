@@ -132,7 +132,6 @@ case $xmos_device in
         ;;
     *)
         # This shouldn't happen as we've already validated the input device
-        error "UNREACHABLE REACHED."
         error "Unknown XMOS device type $xmos_device." >&2
         echo
         usage
@@ -186,6 +185,25 @@ info "Set I2C baud to 100k."
 sudo raspi-config nonint do_spi 1
 sudo raspi-config nonint do_spi 0
 info "Enabled SPI."
+
+# Update system
+info "Updating packages..."
+for ((attempt=1; attempt <= max_install_attempts; attempt++)); do
+    # Attempt to update system
+    if sudo apt-get update -y; then
+        if sudo apt-get upgrade -y; then
+            break
+        fi
+    fi
+
+    warn "Failed to upgrade required packages, attempt $attempt / $max_install_attempts"
+
+    if [[ $attempt -eq $max_install_attempts ]]; then
+        error "Failed to update and upgrade packages."
+        hint "Run `sudo apt upgrade` and `sudo apt update` manually, troubleshoot, then try again."
+    fi
+done
+
 
 # Install required packages
 info "Attempting to install required packages: ${packages[*]}"
@@ -376,5 +394,16 @@ info "New crontab file:\n$(<$crontab_file)"
 info "Updating crontab."
 crontab $crontab_file
 
+# Need to reboot
 echo "To enable all interfaces, this Raspberry Pi must be rebooted."
-
+read -rp "Reboot now to apply changes? [Y/n] " answer
+case "${answer,,}" in
+    y|yes|"")
+        echo "Rebooting now..."
+        sudo reboot
+        ;;
+    *)
+        echo "Reboot postponed. Changes will take effect after next reboot."
+        exit 0
+        ;;
+esac
