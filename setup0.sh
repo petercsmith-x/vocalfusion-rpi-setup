@@ -41,7 +41,6 @@ debug() {
     fi
 }
 
-
 usage() {
     printf '%s\n' \
         'This script sets up the Raspberry Pi to use different XMOS devices.' \
