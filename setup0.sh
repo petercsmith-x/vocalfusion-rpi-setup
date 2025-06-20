@@ -161,7 +161,7 @@ case $rate in
         ;;
 esac
 
-info "i2s_mode: $i2s_mode, io_exp_and_dac_setup: $io_exp_and_dac_setup, asoundrc_template: $asoundrc_template, rate: $rate"
+debug "i2s_mode: $i2s_mode, io_exp_and_dac_setup: $io_exp_and_dac_setup, asoundrc_template: $asoundrc_template, rate: $rate"
 
 # Begin setting up RasPi
 rpi_config=/boot/config.txt
@@ -244,8 +244,8 @@ done
 # Output failed packages
 if [[ ${#failed_packages[@]} -gt 0 ]]; then
     error "Failed to install the following packages after $max_install_attempts attempts:" >&2
-    printf ' - %s\n' "${failed_packages[@]}" >&2
-    echo "Please check network connection and package names, then try again." >&2
+    printf '         - %s\n' "${failed_packages[@]}" >&2
+    hint "Please check network connection and package names, then try again." >&2
     exit 1
 fi
 
@@ -300,9 +300,10 @@ sudo /etc/init.d/alsa-utils restart
 if [[ -n $i2s_mode ]]; then
     # Create the script to run after each reboot and make the soundcard available
     i2s_setup_script=$rpi_setup_dir/resources/setup_i2s_${i2s_mode}.sh
-    info "Creating I2S setup script: $i2s_setup_script."
-    info "Removing old script."
+    info "Removing old I2S setup script."
     rm -f $i2s_setup_script
+
+    info "Creating I2S setup script: $i2s_setup_script."
 
     # Sometimes with Buster on RPi3 the SYNC bit in the I2S_CS_A_REG register is not set before the drivers are loaded
     # According to section 8.8 of https://cs140e.sergio.bz/docs/BCM2837-ARM-Peripherals.pdf
@@ -327,19 +328,19 @@ if [[ -n $i2s_mode ]]; then
 fi
 
 if [[ -n "$io_exp_and_dac_setup" ]]; then
-  # Build setup binary
-  info "Building clock and DAC setup binaries..."
+  # Build setup binaries
+  info "Building MCLK and BCLK setup binaries..."
   make -C $rpi_setup_dir/resources/clk_dac_setup/
 
   # Create DAC and CLK setup script
   dac_and_clks_script=$rpi_setup_dir/resources/init_dac_and_clks.sh
-  info "Creating DAC and CLK setup script: $dac_and_clks_script."
-  info "Removing old script."
+  info "Removing old DAC and CLK setup script."
   rm -f $dac_and_clks_script
 
+  info "Creating DAC and CLK setup script: $dac_and_clks_script."
   # Configure the clocks only if RaspberryPi is configured as I2S master
   if [[ "$i2s_mode" = "master" ]]; then
-    info "I2S mode is $i2s_mode, adding clock configuration to script."
+    debug "I2S mode is $i2s_mode, adding clock configuration to script."
     echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_mclk $rate"   >> $dac_and_clks_script
     echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_bclk $rate"   >> $dac_and_clks_script
   fi
@@ -351,10 +352,10 @@ fi
 
 if [[ -n "$io_exp_and_dac_setup" ]]; then
   audacity_script=$rpi_setup_dir/resources/run_audacity.sh
-  info "Creating Audacity script $audacity_script."
-  info "Removing old script."
+  info "Removing old Audacity script."
   rm -f $audacity_script
 
+  info "Creating Audacity script at $audacity_script."
   echo "#!/usr/bin/env bash" >> $audacity_script
   echo "/usr/bin/audacity &" >> $audacity_script
   echo "sleep 5" >> $audacity_script
@@ -396,10 +397,10 @@ fi
 # https://forums.raspberrypi.com/viewtopic.php?t=295008
 echo "@reboot sleep 20 && cp $asoundrc_template ~/.asoundrc" >> $crontab_file
 
-info "New crontab file:\n$(<$crontab_file)"
+debug "New crontab file:\n$(<$crontab_file)"
 
 # Update crontab
-info "Updating crontab."
+info "Updating crontab with new file."
 crontab $crontab_file
 
 # Need to reboot
