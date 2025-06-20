@@ -23,7 +23,7 @@ pcm.capture_hw {
 }
 
 #
-# Playback device
+# Playback device.
 # plug - rate and format conversion
 # softvol - control for alsamixer
 # dmix - allow device to be shared
@@ -39,16 +39,16 @@ pcm.XMOS_I2S_Playback {
             slave.pcm "playback_hw"
         }
         control {
-            name "Playback Volume"
+            name "Playback"
             card "Device"
         }
     }
 }
 
 #
-# Capture device
+# Comms & ASR recording.
 #
-pcm.XMOS_I2S_Capture {
+pcm.XMOS_I2S_ASR_Comms_(LR) {
     type plug
     slave.pcm {
         type softvol
@@ -59,16 +59,62 @@ pcm.XMOS_I2S_Capture {
             slave.pcm "capture_hw"
         }
         control {
-            name "Capture Volume"
+            name "Record"
             card "Device"
         }
     }
 }
 
+
+#
+# ASR recording.
+#
+pcm.XMOS_I2S_ASR_(L) {
+    type plug
+    slave.pcm {
+        type softvol
+        slave.pcm {
+            type dsnoop
+            ipc_key 512
+            ipc_perm 0666
+            slave.pcm "capture_hw"
+            bindings [0]
+        }
+        control {
+            name "Record"
+            card "Device"
+        }
+    }
+}
+
+#
+# Comms recording.
+#
+pcm.XMOS_I2S_Comms_(R) {
+    type plug
+    slave.pcm {
+        type softvol
+        slave.pcm {
+            type dsnoop
+            ipc_key 512
+            ipc_perm 0666
+            slave.pcm "capture_hw"
+            bindings [1]
+        }
+        control {
+            name "Record"
+            card "Device"
+        }
+    }
+}
+
+#
+# Default devices.
+#
 pcm.!default {
     type asym
     playback.pcm "XMOS_I2S_Playback"
-    capture.pcm "XMOS_I2S_Capture"
+    capture.pcm "XMOS_I2S_ASR_(L)"
 }
 
 #
@@ -82,5 +128,5 @@ pcm.playback {
 
 pcm.capture {
     type plug
-    slave.pcm "XMOS_I2S_Capture"
+    slave.pcm "XMOS_I2S_ASR_(L)"
 }
