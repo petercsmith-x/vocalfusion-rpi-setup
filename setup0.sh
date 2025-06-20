@@ -253,15 +253,14 @@ if [[ ${#failed_packages[@]} -gt 0 ]]; then
     exit 1
 fi
 
-
-# TODO: Test and make different configurations for devices
+# TODO: Test and make different configurations for devices if required
 # Install VocalFusion devicetree overlay
 info "Making and installing VocalFusion DTO."
 make -C $rpi_setup_dir/overlays install
 
-# Enable VocalFusion devicetree overlay now
+# Enable XMOS devicetree overlay
 info "Enabling DTO now."
-sudo dtoverlay vocalfusion-device
+sudo dtoverlay dummy-xmos-device
 
 # TODO: Check out what this does
 # Copy the udev rules files if device is UA
