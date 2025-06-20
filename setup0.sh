@@ -21,6 +21,10 @@ hint() {
     echo -e "\033[0;95m[HINT]\033[0m $1" >&2
 }
 
+info() {
+    echo -e "\033[0;34m[INFO]\033[0m $1" >&2
+}
+
 error() {
     echo -e "\033[0;31m[ERROR]\033[0m $1" >&2
 }
@@ -31,17 +35,12 @@ warn() {
     fi
 }
 
-info() {
+debug() {
     if [[ $debug -gt 1 ]]; then
-        echo -e "\033[0;34m[INFO]\033[0m $1" >&2
+        echo -e "\033[0;36m[DEBUG]\033[0m $1" >&2
     fi
 }
 
-trace() {
-    if [[ $debug -gt 2 ]]; then
-        echo -e "\033[0;36m[TRACE]\033[0m $1" >&2
-    fi
-}
 
 usage() {
     printf '%s\n' \
@@ -226,7 +225,7 @@ for ((attempt=1; attempt <= max_install_attempts; attempt++)); do
 
     # Increasingly sleep between attempts
     if [[ ! $attempt -eq $max_install_attempts ]]; then
-        trace "Sleeping for $((attempt * 2)) seconds..."
+        debug "Sleeping for $((attempt * 2)) seconds..."
         sleep $((attempt * 2))
     fi
 done
@@ -235,7 +234,7 @@ info "Checking required packages are installed."
 
 # Check for failed package installations
 for package in ${packages[@]}; do
-    trace "Checking $package..."
+    debug "Checking $package..."
     if ! dpkg -s $package &>/dev/null; then
         failed_packages+=($package)
         warn "Package $package failed to install."
@@ -404,7 +403,7 @@ info "Updating crontab."
 crontab $crontab_file
 
 # Need to reboot
-echo "To enable all interfaces, this Raspberry Pi must be rebooted."
+echo "To apply changes, this Raspberry Pi must be rebooted."
 read -rp "Reboot now to apply changes? [Y/n] " answer
 case "${answer,,}" in
     y|yes|"")
