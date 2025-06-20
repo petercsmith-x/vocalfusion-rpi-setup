@@ -82,7 +82,7 @@ while true; do
             shift
             ;;
         -r|--rate)
-            rate="$2"
+            rate="${2,,}"
             shift 2
             ;;
         --)
@@ -108,8 +108,7 @@ if [[ $# -lt 1 ]]; then
     exit 1
 fi
 
-xmos_device="$1"
-
+xmos_device="${1,,}"
 if [[ $# -gt 1 ]]; then
     error "Unexpected arguments, expected 1, got $#"
     echo
@@ -137,6 +136,24 @@ case $xmos_device in
         error "Unknown XMOS device type $xmos_device." >&2
         echo
         usage
+        exit 1
+        ;;
+esac
+
+# Check rate is valid
+rate="${rate,,}"
+case $rate in
+    48000|16000)
+        ;;
+    48khz|48k)
+        rate=48000
+        ;;
+    16khz|16k)
+        rate=16000
+        ;;
+    *)
+        error "Invalid clock rate: $rate"
+        hint "Only 16kHz or 48kHz are supported."
         exit 1
         ;;
 esac
