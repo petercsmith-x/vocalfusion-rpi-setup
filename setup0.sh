@@ -222,6 +222,7 @@ if [[ -z $no_update ]]; then
         if [[ $attempt -eq $max_install_attempts ]]; then
             error "Failed to update and upgrade packages."
             hint "Run `sudo apt upgrade` and `sudo apt update` manually, troubleshoot, then try again."
+            exit 1
         fi
     done
 else
