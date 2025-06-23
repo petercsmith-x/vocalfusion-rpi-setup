@@ -5,7 +5,7 @@ This repository provides a simple-to-use automated script to configure the Raspb
 This setup will perform the following operations:
 
 - enable the I2S, I2C and SPI interfaces
-- install the Raspberry Pi kernel headers
+- update the Raspberry Pi's packages
 - install the required packages
 - compile the I2S drivers
 - update the asoundrc file to support I2S devices
