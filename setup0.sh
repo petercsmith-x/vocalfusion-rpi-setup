@@ -131,12 +131,12 @@ case $xmos_device in
     xvf3800-intdev)
         i2s_mode=master
         io_exp_and_dac_setup=y
-        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_dto
+        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf
         ;;
     xvf3610-int)
         i2s_mode=master
         io_exp_and_dac_setup=y
-        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_xvf3610_int_dto
+        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_xvf3610_int
         ;;
     *)
         # This shouldn't happen as we've already validated the input device
