@@ -1,11 +1,6 @@
 // Copyright (c) 2019-2023, XMOS Ltd, All rights reserved
 
 /*
-    Trimmed down version of the minimal_clk.c file present
-    in http://abyz.co.uk/rpi/pigpio/code/minimal_clk.zip
- */
-
-/*
    gcc -o setup_mclk_bclk.c
    sudo ./setup_mclk_bclk
 */
