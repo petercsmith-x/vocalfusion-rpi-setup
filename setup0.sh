@@ -221,7 +221,7 @@ if [[ -z $no_update ]]; then
 
         if [[ $attempt -eq $max_install_attempts ]]; then
             error "Failed to update and upgrade packages."
-            hint "Run `sudo apt upgrade` and `sudo apt update` manually, troubleshoot, then try again."
+            hint "Run \`sudo apt update\` and \`sudo apt upgrade\` manually, troubleshoot, then try again."
             exit 1
         fi
     done
@@ -357,7 +357,7 @@ if [[ -n "$io_exp_and_dac_setup" ]]; then
   # Configure the clocks only if RaspberryPi is configured as I2S master
   if [[ "$i2s_mode" = "master" ]]; then
     debug "I2S mode is $i2s_mode, adding clock configuration to script."
-    echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_mclk $rate"   >> $dac_and_clks_script
+    echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_mclk"   >> $dac_and_clks_script
     echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_bclk $rate"   >> $dac_and_clks_script
   fi
   
