@@ -1,6 +1,9 @@
 # xCORE VocalFusion Raspberry Pi Setup
 
-This repository provides a simple-to-use automated script to configure the Raspberry Pi to use **xCORE VocalFusion** for audio.
+This repository provides a simple-to-use automated script to configure a Raspberry Pi to use **xCORE VocalFusion** for audio.
+
+> [!WARNING]
+> Configurations that require an external MCLK (e.g. XVF3610) are not currently supported for the Raspberry Pi 5. See compatibility section below.
 
 This setup will perform the following operations:
 
@@ -9,12 +12,11 @@ This setup will perform the following operations:
 - install the required packages
 - install a devicetree overlay for I2S
 - update the asoundrc file to support I2S devices
-- add a cron job to load the I2S drivers at boot up
 
 For XVF361x-INT devices these actions will be done as well:
 
-- configure MCLK at 12288kHz from pin 7 (BCM 4)
-- configure I2S BCLK at 3072kHz from pin 12 (BCM 18)
+- configure MCLK at 12.288 MHz from GPIO4 [see warning below]
+- configure I2S BCLK at 3.072 MHz from GPIO18
 - update the alias for Audacity
 - update the asoundrc file to support I2S devices
 - add a cron job to reset the device at boot up
@@ -36,6 +38,14 @@ For XVF3800 devices these actions will be done as well:
 <!-- - update the asoundrc file to support USB devices -->
 <!-- - update udev rules so that root privileges are not needed to access USB control interface -->
 
+
+## Compatibility
+
+|                | Raspberry Pi 4 | Raspberry Pi 5 |
+|----------------|----------------|----------------|
+| XVF3610-INT    | Yes            | No             |
+| XVF3800-INTDEV | Yes            | Yes            |
+
 ## Setup
 
 1. First, install the Raspberry Pi imager on a host computer. This is available [here](https://www.raspberrypi.org/software) or through your package manager.
@@ -50,7 +60,7 @@ For XVF3800 devices these actions will be done as well:
    sudo apt install rpi-imager
    ```
 
-   Run the imager (may require `root` privileges), select the Raspberry Pi you are using (tested on Pi 4<!-- TODO: Pi 3, Pi 5-->), Bookworm and Bullseye are both supported.
+   Run the imager (may require `root` privileges), select the Raspberry Pi you are using, Bookworm and Bullseye are both supported.
 
    Then, choose your SD card and write to it. When prompted, remove the SD card and insert it into the Raspberry Pi.
 
@@ -64,7 +74,7 @@ For XVF3800 devices these actions will be done as well:
    git clone https://github.com/xmos/vocalfusion-rpi-setup
    ```
 
-4. Simply run the setup script for your device. Run `./setup -h` for usage.
+4. Simply run the setup script for your device. Run `./setup.sh -h` for usage.
 
    For example, for an XVF3800 with 48kHz sample rate:
    ```bash
