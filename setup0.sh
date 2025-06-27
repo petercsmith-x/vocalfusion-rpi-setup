@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Go to script location
-rpi_setup_dir=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd -P)
+rpi_setup_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 
 i2s_mode=
 xmos_device=
@@ -32,13 +32,13 @@ error() {
 }
 
 warn() {
-    if [[ $debug -gt 0 ]]; then
+    if (( debug > 0 )); then
         echo -e "\033[0;33m[WARN]\033[0m $1" >&2
     fi
 }
 
 debug() {
-    if [[ $debug -gt 1 ]]; then
+    if (( debug > 1 )); then
         echo -e "\033[0;36m[DEBUG]\033[0m $1" >&2
     fi
 }
@@ -111,15 +111,16 @@ done
 shift $((OPTIND -1))
 
 # Check for unexpected arguments
-if [[ $# -lt 1 ]]; then
-    error "Device type is required."
+if (( $# < 1 )); then
+    error 'Device type is required.'
     echo
     usage
     exit 1
 fi
 
 xmos_device="${1,,}"
-if [[ $# -gt 1 ]]; then
+
+if (( $# > 1 )); then
     error "Unexpected arguments, expected 1, got $#"
     echo
     usage
@@ -155,9 +156,29 @@ case $xmos_device in
         ;;
 esac
 
+# Check rate is valid
+rate="${rate,,}"
+case $rate in
+    48000|16000)
+        ;;
+    48khz|48k)
+        rate=48000
+        ;;
+    16khz|16k)
+        rate=16000
+        ;;
+    *)
+        error "Invalid clock rate: $rate"
+        hint 'Only 16kHz or 48kHz are supported.'
+        exit 1
+        ;;
+esac
+
+debug "i2s_mode: $i2s_mode, io_exp_and_dac_setup: $io_exp_and_dac_setup, asoundrc_template: $asoundrc_template, rate: $rate"
+
 # If an external MCLK is needed, we need to check if the Pi is compatible.
-if [[ -n "$ext_mclk" ]] then
-    rpi_type=$(cat /proc/device-tree/compatible | tr '\0' ',' | cut -d, -f2)
+if [[ -n "$ext_mclk" ]]; then
+    rpi_type=$(tr '\0' ',' < /proc/device-tree/compatible | cut -d, -f2)
     case $rpi_type in
         500|5-compute-module|5-model-b)
             # PiGPIO does not support the Raspberry Pi 5 likely due to the lack of documentation:
@@ -172,37 +193,17 @@ if [[ -n "$ext_mclk" ]] then
     esac
 fi
 
-# Check rate is valid
-rate="${rate,,}"
-case $rate in
-    48000|16000)
-        ;;
-    48khz|48k)
-        rate=48000
-        ;;
-    16khz|16k)
-        rate=16000
-        ;;
-    *)
-        error "Invalid clock rate: $rate"
-        hint "Only 16kHz or 48kHz are supported."
-        exit 1
-        ;;
-esac
-
-debug "i2s_mode: $i2s_mode, io_exp_and_dac_setup: $io_exp_and_dac_setup, asoundrc_template: $asoundrc_template, rate: $rate"
-
 # Begin setting up RasPi
 rpi_config_root=
 if [[ -f '/boot/firmware/config.txt' ]]; then
-    info "Config found at /boot/firmware/config.txt"
+    info 'Config found at /boot/firmware/config.txt'
     rpi_config_root=/boot/firmware
 elif [[ -f '/boot/config.txt' ]]; then
-    info "Config found at /boot/config.txt"
+    info 'Config found at /boot/config.txt'
     rpi_config_root=/boot
 else
     error "Couldn't find Raspberry Pi configuration file."
-    hint "Check if either /boot/config.txt and /boot/firmware/config.txt exist."
+    hint 'Check if either /boot/config.txt and /boot/firmware/config.txt exist.'
     exit 1
 fi
 rpi_config="$rpi_config_root/config.txt"
@@ -218,22 +219,22 @@ info "Enabled I2S devicetree in $rpi_config."
 # Enable I2C devicetree
 sudo raspi-config nonint do_i2c 1
 sudo raspi-config nonint do_i2c 0
-info "Enabled I2C devicetree."
+info 'Enabled I2C devicetree.'
 
 # Set I2C baudrate to 100k
 if ! grep -q '^dtparam=i2c_arm_baudrate=100000$' "$rpi_config"; then
-    echo "dtparam=i2c_arm_baudrate=100000" | sudo tee -a "$rpi_config" >/dev/null
+    echo 'dtparam=i2c_arm_baudrate=100000' | sudo tee -a "$rpi_config" >/dev/null
 fi
-info "Set I2C baud to 100k."
+info 'Set I2C baud to 100k.'
 
 # Enable SPI
 sudo raspi-config nonint do_spi 1
 sudo raspi-config nonint do_spi 0
-info "Enabled SPI."
+info 'Enabled SPI.'
 
 # Update system
-if [[ -z $no_update ]]; then
-    info "Updating packages..."
+if [[ -z "$no_update" ]]; then
+    info 'Updating packages...'
     for ((attempt=1; attempt <= max_install_attempts; attempt++)); do
         # Attempt to update system
         if sudo apt-get update -y; then
@@ -244,14 +245,14 @@ if [[ -z $no_update ]]; then
 
         warn "Failed to upgrade required packages, attempt $attempt / $max_install_attempts"
 
-        if [[ $attempt -eq $max_install_attempts ]]; then
-            error "Failed to update and upgrade packages."
-            hint "Run `sudo apt upgrade` and `sudo apt update` manually, troubleshoot, then try again."
+        if (( attempt == $max_install_attempts )); then
+            error 'Failed to update and upgrade packages.'
+            hint 'Run \`sudo apt update\` and \`sudo apt upgrade\` manually, troubleshoot, then try again.'
             exit 1
         fi
     done
 else
-    info "Skipping update as --no-update used."
+    info 'Skipping update as --no-update used.'
 fi
 
 
@@ -266,13 +267,13 @@ for ((attempt=1; attempt <= max_install_attempts; attempt++)); do
     warn "Failed to install required packages, attempt $attempt / $max_install_attempts"
 
     # Increasingly sleep between attempts
-    if [[ ! $attempt -eq $max_install_attempts ]]; then
+    if (( attempt != max_install_attempts )); then
         debug "Sleeping for $((attempt * 2)) seconds..."
         sleep $((attempt * 2))
     fi
 done
 
-info "Checking required packages are installed."
+info 'Checking required packages are installed.'
 
 # Check for failed package installations
 for package in ${packages[@]}; do
@@ -284,10 +285,10 @@ for package in ${packages[@]}; do
 done
 
 # Output failed packages
-if [[ ${#failed_packages[@]} -gt 0 ]]; then
-    error "Failed to install the following packages after $max_install_attempts attempts:" >&2
-    printf '         - %s\n' "${failed_packages[@]}" >&2
-    hint "Please check network connection and package names, then try again." >&2
+if (( ${#failed_packages[@]} > 0 )); then
+    error "Failed to install the following packages after $max_install_attempts attempts:"
+    printf '         - %s\n' "${failed_packages[@]}"
+    hint 'Please check network connection and package names, then try again.'
     exit 1
 fi
 
@@ -297,31 +298,31 @@ info "Making and installing XMOS DTO."
 RPI_CONFIG_ROOT=$rpi_config_root make -C $rpi_setup_dir/overlays install
 
 # Enable XMOS devicetree overlay
-info "Enabling DTO now."
+info 'Enabling DTO now.'
 sudo dtoverlay dummy-xmos-device
 
 # TODO: Check out what this does
 # Copy the udev rules files if device is UA
 if [[ -n "$usb_mode" ]]; then
-    info "Adding UDEV rules for XMOS devices"
+    info 'Adding UDEV rules for XMOS devices'
     sudo cp $rpi_setup_dir/resources/99-xmos.rules /etc/udev/rules.d/
 fi
 
 # Move existing files to back up
 if [[ -e ~/.asoundrc ]]; then
-    info "Moving ~/.asoundrc to ~/.asoundrc.bak"
-    chmod a+w ~/.asoundrc
+    info 'Moving ~/.asoundrc to ~/.asoundrc.bak'
+    chmod u+w ~/.asoundrc
     cp ~/.asoundrc ~/.asoundrc.bak
 fi
 
 if [[ -e /usr/share/alsa/pulse-alsa.conf ]]; then
-    info "Moving /usr/share/alsa/pulse-alsa.conf to /usr/share/alsa/pulse-alsa.conf.bak"
+    info 'Moving /usr/share/alsa/pulse-alsa.conf to /usr/share/alsa/pulse-alsa.conf.bak'
     sudo mv /usr/share/alsa/pulse-alsa.conf /usr/share/alsa/pulse-alsa.conf.bak
 fi
 
 # Check XMOS device for asoundrc selection.
 if [[ -z "$asoundrc_template" ]]; then
-  error "Sound card config not known for XMOS device $xmos_device." >&2
+  error "Sound card config not known for XMOS device $xmos_device."
   exit 1
 fi
 
@@ -335,13 +336,13 @@ info "Copying asoundrc: $asoundrc_template to ~/.asoundrc"
 cp $asoundrc_template ~/.asoundrc
 
 # Apply changes
-info "Applying .asoundrc changes."
+info 'Applying .asoundrc changes.'
 sudo /etc/init.d/alsa-utils restart
 
-if [[ -n $i2s_mode ]]; then
+if [[ -n "$i2s_mode" ]]; then
     # Create the script to run after each reboot and make the soundcard available
     i2s_setup_script=$rpi_setup_dir/resources/setup_i2s_${i2s_mode}.sh
-    info "Removing old I2S setup script."
+    info 'Removing old I2S setup script.'
     rm -f $i2s_setup_script
 
     info "Creating I2S setup script: $i2s_setup_script."
@@ -370,12 +371,12 @@ fi
 
 if [[ -n "$io_exp_and_dac_setup" ]]; then
   # Build setup binaries
-  info "Building MCLK and BCLK setup binaries..."
+  info 'Building MCLK and BCLK setup binaries...'
   make -C $rpi_setup_dir/resources/clk_dac_setup/
 
   # Create DAC and CLK setup script
   dac_and_clks_script=$rpi_setup_dir/resources/init_dac_and_clks.sh
-  info "Removing old DAC and CLK setup script."
+  info 'Removing old DAC and CLK setup script.'
   rm -f $dac_and_clks_script
 
   info "Creating DAC and CLK setup script: $dac_and_clks_script."
@@ -393,7 +394,7 @@ fi
 
 if [[ -n "$io_exp_and_dac_setup" ]]; then
   audacity_script=$rpi_setup_dir/resources/run_audacity.sh
-  info "Removing old Audacity script."
+  info 'Removing old Audacity script.'
   rm -f $audacity_script
 
   info "Creating Audacity script at $audacity_script."
@@ -441,23 +442,23 @@ echo "@reboot sleep 20 && cp $asoundrc_template ~/.asoundrc" >> $crontab_file
 debug "New crontab file:\n$(<$crontab_file)"
 
 # Update crontab
-info "Updating crontab with new file."
+info 'Updating crontab with new file.'
 crontab $crontab_file
 
 # Need to reboot
-if [[ -n "$yes_reboot" ]] then
-    info "Rebooting now..."
+if [[ -n "$yes_reboot" ]]; then
+    info 'Rebooting now...'
     sudo reboot
 else
-    info "To apply changes, this Raspberry Pi must be rebooted."
-    read -rp "Reboot now to apply changes? [Y/n] " answer
+    info 'To apply changes, this Raspberry Pi must be rebooted.'
+    read -rp 'Reboot now to apply changes? [Y/n] ' answer
     case "${answer,,}" in
         y|yes|"")
-            echo "Rebooting now..."
+            echo 'Rebooting now...'
             sudo reboot
             ;;
         *)
-            echo "Reboot postponed. Changes will take effect after next reboot."
+            echo 'Reboot postponed. Changes will take effect after next reboot.'
             exit 0
             ;;
     esac
