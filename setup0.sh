@@ -7,10 +7,12 @@ i2s_mode=
 xmos_device=
 rate=48000
 no_update=
+yes_reboot=
 max_install_attempts=3
 valid_xmos_devices=(xvf3800-intdev xvf3610-int)
 printf -v devices_display_string '%s, ' "${valid_xmos_devices[@]}"
 devices_display_string="${devices_display_string%, }"
+ext_mclk=
 
 packages=(python3-matplotlib python3-numpy libatlas-base-dev audacity libreadline-dev libncurses-dev)
 
@@ -50,12 +52,13 @@ usage() {
         "    -v|--verbose      Increase verbosity (multiple for more detail)." \
         "    -h|--help         Show this help message." \
         "    -r|--rate <rate>  Set the sample rate to use (Hz), must match the rate of the XMOS software (default: 48000)." \
-        "    -N|--no-update    Don't update the Raspberry Pi's packages." >&2
+        "    -N|--no-update    Don't update the Raspberry Pi's packages." \
+        "    -y|--yes          Say yes to rebooting after setup." >&2
 }
 
 # Parse args
 temp_err=$(mktemp)
-if ! OPTS=$(getopt -o hvr:N --long help,verbose,rate,no-update -n "$0" -- "$@" 2>"$temp_err"); then
+if ! OPTS=$(getopt -o hvr:Ny --long help,verbose,rate,no-update,yes -n "$0" -- "$@" 2>"$temp_err"); then
     while IFS=: read -r err_line; do
         error "$(sed 's/.*: //' <<< "$err_line")"
     done < "$temp_err"
@@ -86,6 +89,10 @@ while true; do
             ;;
         -N|--no-update)
             no_update=y
+            shift
+            ;;
+        -y|--yes)
+            yes_reboot=y
             shift
             ;;
         --)
@@ -137,6 +144,7 @@ case $xmos_device in
         i2s_mode=master
         io_exp_and_dac_setup=y
         asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_xvf3610_int
+        ext_mclk=y
         ;;
     *)
         # This shouldn't happen as we've already validated the input device
@@ -146,6 +154,23 @@ case $xmos_device in
         exit 1
         ;;
 esac
+
+# If an external MCLK is needed, we need to check if the Pi is compatible.
+if [[ -n "$ext_mclk" ]] then
+    rpi_type=$(cat /proc/device-tree/compatible | tr '\0' ',' | cut -d, -f2)
+    case $rpi_type in
+        500|5-compute-module|5-model-b)
+            # PiGPIO does not support the Raspberry Pi 5 likely due to the lack of documentation:
+            # https://github.com/raspberrypi/documentation/issues/3285
+            # https://github.com/joan2937/pigpio/issues/589
+            error "The Raspberry Pi 5 is not supported for configurations requiring an external MCLK."
+            exit 1
+            ;;
+        *)
+            break
+            ;;
+    esac
+fi
 
 # Check rate is valid
 rate="${rate,,}"
@@ -420,15 +445,20 @@ info "Updating crontab with new file."
 crontab $crontab_file
 
 # Need to reboot
-info "To apply changes, this Raspberry Pi must be rebooted."
-read -rp "Reboot now to apply changes? [Y/n] " answer
-case "${answer,,}" in
-    y|yes|"")
-        echo "Rebooting now..."
-        sudo reboot
-        ;;
-    *)
-        echo "Reboot postponed. Changes will take effect after next reboot."
-        exit 0
-        ;;
-esac
+if [[ -n "$yes_reboot" ]] then
+    info "Rebooting now..."
+    sudo reboot
+else
+    info "To apply changes, this Raspberry Pi must be rebooted."
+    read -rp "Reboot now to apply changes? [Y/n] " answer
+    case "${answer,,}" in
+        y|yes|"")
+            echo "Rebooting now..."
+            sudo reboot
+            ;;
+        *)
+            echo "Reboot postponed. Changes will take effect after next reboot."
+            exit 0
+            ;;
+    esac
+fi
