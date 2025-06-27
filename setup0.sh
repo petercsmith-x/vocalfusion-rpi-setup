@@ -9,7 +9,7 @@ rate=48000
 no_update=
 yes_reboot=
 max_install_attempts=3
-valid_xmos_devices=(xvf3800-intdev xvf3610-int)
+valid_xmos_devices=(xvf3800-intdev xvf3800-intdev-extmclk xvf3610-int)
 printf -v devices_display_string '%s, ' "${valid_xmos_devices[@]}"
 devices_display_string="${devices_display_string%, }"
 ext_mclk=
@@ -136,6 +136,12 @@ fi
 
 # Select device options
 case $xmos_device in
+    xvf3800-intdev-extmclk)
+        i2s_mode=master
+        io_exp_and_dac_setup=y
+        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf
+        ext_mclk=y
+        ;;
     xvf3800-intdev)
         i2s_mode=master
         io_exp_and_dac_setup=y
