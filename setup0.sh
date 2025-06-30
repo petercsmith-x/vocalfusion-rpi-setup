@@ -4,20 +4,19 @@
 rpi_setup_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 
 i2s_mode=
+usb_mode=
 xmos_device=
 rate=48000
 no_update=
 yes_reboot=
 max_install_attempts=3
-valid_xmos_devices=(xvf3800-intdev xvf3800-intdev-extmclk xvf3610-int)
+valid_xmos_devices=(xvf3800-intdev xvf3800-intdev-extmclk xvf3610-int xvf3610-ua)
 printf -v devices_display_string '%s, ' "${valid_xmos_devices[@]}"
 devices_display_string="${devices_display_string%, }"
 ext_mclk=
 
 packages=(python3-matplotlib python3-numpy libatlas-base-dev audacity libreadline-dev libncurses-dev)
-
-# TODO: No ua devices currently supported
-# packages_ua=(libusb-1.0-0-dev libevdev-dev libudev-dev)
+packages_ua=(libusb-1.0-0-dev libevdev-dev libudev-dev)
 
 hint() {
     echo -e "\033[0;95m[HINT]\033[0m $1" >&2
@@ -153,6 +152,11 @@ case $xmos_device in
         asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_xvf3610_int
         ext_mclk=y
         ;;
+    xvf3610-ua)
+        usb_mode=y
+        i2s_mode=slave
+        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_xvf3610_ua
+        ;;
     *)
         # This shouldn't happen as we've already validated the input device
         error "Unknown XMOS device type $xmos_device." >&2
@@ -261,6 +265,11 @@ else
     info 'Skipping update as --no-update used.'
 fi
 
+# Add USB audio packages if required
+if [[ -n "$usb_mode" ]]; then
+    debug "Appending USB audio packages to package list."
+    packages=(${packages[@]} ${packages_ua[@]})
+fi
 
 # Install required packages
 info "Attempting to install required packages: ${packages[*]}"
@@ -298,7 +307,6 @@ if (( ${#failed_packages[@]} > 0 )); then
     exit 1
 fi
 
-# TODO: Test and make different configurations for devices if required
 # Install XMOS devicetree overlay
 info "Making and installing XMOS DTO."
 RPI_CONFIG_ROOT=$rpi_config_root make -C $rpi_setup_dir/overlays install
@@ -307,7 +315,6 @@ RPI_CONFIG_ROOT=$rpi_config_root make -C $rpi_setup_dir/overlays install
 info 'Enabling DTO now.'
 sudo dtoverlay dummy-xmos-device
 
-# TODO: Check out what this does
 # Copy the udev rules files if device is UA
 if [[ -n "$usb_mode" ]]; then
     info 'Adding UDEV rules for XMOS devices'
