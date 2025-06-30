@@ -400,7 +400,7 @@ if [[ -n "$io_exp_and_dac_setup" ]]; then
   fi
   
   # Note that only the substring xvfXXXX from $xmos_device is used in the lines below
-  echo "python $rpi_setup_dir/resources/clk_dac_setup/setup_io_exp_and_dac.py $(echo $xmos_device | cut -c1-7)" >> $dac_and_clks_script
+  echo "python $rpi_setup_dir/resources/clk_dac_setup/setup_io_exp_and_dac.py $xmos_device" >> $dac_and_clks_script
   echo "python $rpi_setup_dir/resources/clk_dac_setup/reset_xvf.py $(echo $xmos_device | cut -c1-7)" >> $dac_and_clks_script
 fi
 
