@@ -442,7 +442,9 @@ fi
 # Delay the action to allow the host to boot up
 # This is needed to address the known issue in Raspian Buster:
 # https://forums.raspberrypi.com/viewtopic.php?t=295008
-echo "@reboot sleep 20 && cp $asoundrc_template ~/.asoundrc" >> $crontab_file
+if [[ -n "$asoundrc_template" ]]; then
+    echo "@reboot sleep 20 && cp $asoundrc_template ~/.asoundrc" >> $crontab_file
+fi
 
 debug "New crontab file:\n$(<$crontab_file)"
 
