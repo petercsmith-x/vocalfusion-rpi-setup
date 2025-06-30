@@ -4,20 +4,19 @@
 rpi_setup_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 
 i2s_mode=
+usb_mode=
 xmos_device=
 rate=48000
 no_update=
 yes_reboot=
 max_install_attempts=3
-valid_xmos_devices=(xvf3800-intdev xvf3800-intdev-extmclk xvf3610-int)
+valid_xmos_devices=(xvf3800-intdev xvf3800-intdev-extmclk xvf3610-int xvf3610-ua)
 printf -v devices_display_string '%s, ' "${valid_xmos_devices[@]}"
 devices_display_string="${devices_display_string%, }"
 ext_mclk=
 
 packages=(python3-matplotlib python3-numpy libatlas-base-dev audacity libreadline-dev libncurses-dev)
-
-# TODO: No ua devices currently supported
-# packages_ua=(libusb-1.0-0-dev libevdev-dev libudev-dev)
+packages_ua=(libusb-1.0-0-dev libevdev-dev libudev-dev)
 
 hint() {
     echo -e "\033[0;95m[HINT]\033[0m $1" >&2
@@ -153,6 +152,10 @@ case $xmos_device in
         asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_xvf3610_int
         ext_mclk=y
         ;;
+    xvf3610-ua)
+        usb_mode=y
+        i2s_mode=slave
+        ;;
     *)
         # This shouldn't happen as we've already validated the input device
         error "Unknown XMOS device type $xmos_device." >&2
@@ -180,7 +183,7 @@ case $rate in
         ;;
 esac
 
-debug "i2s_mode: $i2s_mode, io_exp_and_dac_setup: $io_exp_and_dac_setup, asoundrc_template: $asoundrc_template, rate: $rate"
+debug "usb_mode: $usb_mode, i2s_mode: $i2s_mode, io_exp_and_dac_setup: $io_exp_and_dac_setup, asoundrc_template: $asoundrc_template, rate: $rate"
 
 # If an external MCLK is needed, we need to check if the Pi is compatible.
 if [[ -n "$ext_mclk" ]]; then
@@ -261,6 +264,11 @@ else
     info 'Skipping update as --no-update used.'
 fi
 
+# Add USB audio packages if required
+if [[ -n "$usb_mode" ]]; then
+    debug "Appending USB audio packages to package list."
+    packages=(${packages[@]} ${packages_ua[@]})
+fi
 
 # Install required packages
 info "Attempting to install required packages: ${packages[*]}"
@@ -298,52 +306,50 @@ if (( ${#failed_packages[@]} > 0 )); then
     exit 1
 fi
 
-# TODO: Test and make different configurations for devices if required
 # Install XMOS devicetree overlay
-info "Making and installing XMOS DTO."
-RPI_CONFIG_ROOT=$rpi_config_root make -C $rpi_setup_dir/overlays install
+if [[ -z "$usb_mode" ]]; then
+    info 'Making and installing XMOS DTO.'
+    RPI_CONFIG_ROOT=$rpi_config_root make -C $rpi_setup_dir/overlays install
 
-# Enable XMOS devicetree overlay
-info 'Enabling DTO now.'
-sudo dtoverlay dummy-xmos-device
+    # Enable XMOS devicetree overlay
+    info 'Enabling DTO now.'
+    sudo dtoverlay dummy-xmos-device
+else
+    debug 'UA device, skipping overlay installation.'
+fi
 
-# TODO: Check out what this does
 # Copy the udev rules files if device is UA
 if [[ -n "$usb_mode" ]]; then
-    info 'Adding UDEV rules for XMOS devices'
+    info 'Adding UDEV rules for XMOS devices.'
     sudo cp $rpi_setup_dir/resources/99-xmos.rules /etc/udev/rules.d/
 fi
 
 # Move existing files to back up
-if [[ -e ~/.asoundrc ]]; then
-    info 'Moving ~/.asoundrc to ~/.asoundrc.bak'
-    chmod u+w ~/.asoundrc
-    cp ~/.asoundrc ~/.asoundrc.bak
+if [[ -n "$asoundrc_template" ]]; then
+    if [[ -e ~/.asoundrc ]]; then
+        info 'Moving ~/.asoundrc to ~/.asoundrc.bak'
+        chmod u+w ~/.asoundrc
+        cp ~/.asoundrc ~/.asoundrc.bak
+    fi
+
+    if [[ -e /usr/share/alsa/pulse-alsa.conf ]]; then
+        info 'Moving /usr/share/alsa/pulse-alsa.conf to /usr/share/alsa/pulse-alsa.conf.bak'
+        sudo mv /usr/share/alsa/pulse-alsa.conf /usr/share/alsa/pulse-alsa.conf.bak
+    fi
+
+    # Create new asoundrc with specified rate
+    info "Generating asoundrc with specified rate at ${asoundrc_template}_$rate"
+    sed "s/{{rate}}/$rate/g" "$asoundrc_template" > "${asoundrc_template}_$rate"
+    asoundrc_template="${asoundrc_template}_$rate"
+
+    # Copy asoundrc config to correct location
+    info "Copying asoundrc: $asoundrc_template to ~/.asoundrc"
+    cp $asoundrc_template ~/.asoundrc
+
+    # Apply changes
+    info 'Applying .asoundrc changes.'
+    sudo /etc/init.d/alsa-utils restart
 fi
-
-if [[ -e /usr/share/alsa/pulse-alsa.conf ]]; then
-    info 'Moving /usr/share/alsa/pulse-alsa.conf to /usr/share/alsa/pulse-alsa.conf.bak'
-    sudo mv /usr/share/alsa/pulse-alsa.conf /usr/share/alsa/pulse-alsa.conf.bak
-fi
-
-# Check XMOS device for asoundrc selection.
-if [[ -z "$asoundrc_template" ]]; then
-  error "Sound card config not known for XMOS device $xmos_device."
-  exit 1
-fi
-
-# Create new asoundrc with specified rate
-info "Generating asoundrc with specified rate at ${asoundrc_template}_$rate"
-sed "s/{{rate}}/$rate/g" "$asoundrc_template" > "${asoundrc_template}_$rate"
-asoundrc_template="${asoundrc_template}_$rate"
-
-# Copy asoundrc config to correct location
-info "Copying asoundrc: $asoundrc_template to ~/.asoundrc"
-cp $asoundrc_template ~/.asoundrc
-
-# Apply changes
-info 'Applying .asoundrc changes.'
-sudo /etc/init.d/alsa-utils restart
 
 if [[ -n "$i2s_mode" ]]; then
     # Create the script to run after each reboot and make the soundcard available
@@ -443,7 +449,9 @@ fi
 # Delay the action to allow the host to boot up
 # This is needed to address the known issue in Raspian Buster:
 # https://forums.raspberrypi.com/viewtopic.php?t=295008
-echo "@reboot sleep 20 && cp $asoundrc_template ~/.asoundrc" >> $crontab_file
+if [[ -n "$asoundrc_template" ]]; then
+    echo "@reboot sleep 20 && cp $asoundrc_template ~/.asoundrc" >> $crontab_file
+fi
 
 debug "New crontab file:\n$(<$crontab_file)"
 
