@@ -155,7 +155,6 @@ case $xmos_device in
     xvf3610-ua)
         usb_mode=y
         i2s_mode=slave
-        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_xvf3610_ua
         ;;
     *)
         # This shouldn't happen as we've already validated the input device
@@ -322,35 +321,31 @@ if [[ -n "$usb_mode" ]]; then
 fi
 
 # Move existing files to back up
-if [[ -e ~/.asoundrc ]]; then
-    info 'Moving ~/.asoundrc to ~/.asoundrc.bak'
-    chmod u+w ~/.asoundrc
-    cp ~/.asoundrc ~/.asoundrc.bak
+if [[ -n "$asoundrc_template" ]]; then
+    if [[ -e ~/.asoundrc ]]; then
+        info 'Moving ~/.asoundrc to ~/.asoundrc.bak'
+        chmod u+w ~/.asoundrc
+        cp ~/.asoundrc ~/.asoundrc.bak
+    fi
+
+    if [[ -e /usr/share/alsa/pulse-alsa.conf ]]; then
+        info 'Moving /usr/share/alsa/pulse-alsa.conf to /usr/share/alsa/pulse-alsa.conf.bak'
+        sudo mv /usr/share/alsa/pulse-alsa.conf /usr/share/alsa/pulse-alsa.conf.bak
+    fi
+
+    # Create new asoundrc with specified rate
+    info "Generating asoundrc with specified rate at ${asoundrc_template}_$rate"
+    sed "s/{{rate}}/$rate/g" "$asoundrc_template" > "${asoundrc_template}_$rate"
+    asoundrc_template="${asoundrc_template}_$rate"
+
+    # Copy asoundrc config to correct location
+    info "Copying asoundrc: $asoundrc_template to ~/.asoundrc"
+    cp $asoundrc_template ~/.asoundrc
+
+    # Apply changes
+    info 'Applying .asoundrc changes.'
+    sudo /etc/init.d/alsa-utils restart
 fi
-
-if [[ -e /usr/share/alsa/pulse-alsa.conf ]]; then
-    info 'Moving /usr/share/alsa/pulse-alsa.conf to /usr/share/alsa/pulse-alsa.conf.bak'
-    sudo mv /usr/share/alsa/pulse-alsa.conf /usr/share/alsa/pulse-alsa.conf.bak
-fi
-
-# Check XMOS device for asoundrc selection.
-if [[ -z "$asoundrc_template" ]]; then
-  error "Sound card config not known for XMOS device $xmos_device."
-  exit 1
-fi
-
-# Create new asoundrc with specified rate
-info "Generating asoundrc with specified rate at ${asoundrc_template}_$rate"
-sed "s/{{rate}}/$rate/g" "$asoundrc_template" > "${asoundrc_template}_$rate"
-asoundrc_template="${asoundrc_template}_$rate"
-
-# Copy asoundrc config to correct location
-info "Copying asoundrc: $asoundrc_template to ~/.asoundrc"
-cp $asoundrc_template ~/.asoundrc
-
-# Apply changes
-info 'Applying .asoundrc changes.'
-sudo /etc/init.d/alsa-utils restart
 
 if [[ -n "$i2s_mode" ]]; then
     # Create the script to run after each reboot and make the soundcard available
