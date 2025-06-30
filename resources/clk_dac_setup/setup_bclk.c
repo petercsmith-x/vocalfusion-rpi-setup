@@ -12,7 +12,7 @@ int main(int argc, char *argv[argc + 1]) {
   case 2:
     input = atoi(argv[1]);
 
-    if (input != 48000 || input != 16000) {
+    if (input != 48000 && input != 16000) {
       fprintf(
           stderr,
           "ERROR: Unsupported frequency (%d), only 48kHz and 16kHz supported.",

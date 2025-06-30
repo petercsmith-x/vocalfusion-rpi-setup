@@ -209,7 +209,7 @@ elif [[ -f '/boot/config.txt' ]]; then
     rpi_config_root=/boot
 else
     error "Couldn't find Raspberry Pi configuration file."
-    hint 'Check if either /boot/config.txt and /boot/firmware/config.txt exist.'
+    hint 'Check if either /boot/config.txt or /boot/firmware/config.txt exist.'
     exit 1
 fi
 rpi_config="$rpi_config_root/config.txt"
