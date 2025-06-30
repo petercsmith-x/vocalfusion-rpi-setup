@@ -40,12 +40,13 @@ For XVF3510-UA and XVF361x-UA devices these actions will be done as well:
 
 ## Compatibility
 
-|                | Raspberry Pi 4 | Raspberry Pi 5 |
-|----------------|----------------|----------------|
-| XVF3610-INT    | Yes            | No             |
-| XVF3610-UA     | Yes            | Yes            |
-| XVF3800-INTDEV | Yes            | Yes            |
-| XVF3800-UA     | Yes            | Yes            |
+|                        | Raspberry Pi 4 | Raspberry Pi 5 |
+|------------------------|----------------|----------------|
+| XVF3610-INT            | Yes            | No             |
+| XVF3610-UA             | Yes            | Yes            |
+| XVF3800-INTDEV-EXTMCLK | Yes            | No             |
+| XVF3800-INTDEV         | Yes            | Yes            |
+| XVF3800-UA             | Yes            | Yes            |
 
 ## Setup
 
