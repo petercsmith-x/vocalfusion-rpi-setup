@@ -33,10 +33,9 @@ For XVF3800 devices these actions will be done as well:
 <!-- For XVF3800-extmclk devices these actions will be done as well: -->
 <!-- - configure MCLK at 12288kHz from pin 7 (BCM 4) and drive to XVF3800 -->
 
-<!-- For XVF3510-UA and XVF361x-UA devices these actions will be done as well: -->
-<!---->
-<!-- - update the asoundrc file to support USB devices -->
-<!-- - update udev rules so that root privileges are not needed to access USB control interface -->
+For XVF3510-UA and XVF361x-UA devices these actions will be done as well:
+
+- update udev rules so that root privileges are not needed to access USB control interface
 
 
 ## Compatibility
@@ -44,7 +43,9 @@ For XVF3800 devices these actions will be done as well:
 |                | Raspberry Pi 4 | Raspberry Pi 5 |
 |----------------|----------------|----------------|
 | XVF3610-INT    | Yes            | No             |
+| XVF3610-UA     | Yes            | Yes            |
 | XVF3800-INTDEV | Yes            | Yes            |
+| XVF3800-UA     | Yes            | Yes            |
 
 ## Setup
 
