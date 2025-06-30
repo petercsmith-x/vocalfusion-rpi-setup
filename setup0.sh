@@ -183,7 +183,7 @@ case $rate in
         ;;
 esac
 
-debug "i2s_mode: $i2s_mode, io_exp_and_dac_setup: $io_exp_and_dac_setup, asoundrc_template: $asoundrc_template, rate: $rate"
+debug "usb_mode: $usb_mode, i2s_mode: $i2s_mode, io_exp_and_dac_setup: $io_exp_and_dac_setup, asoundrc_template: $asoundrc_template, rate: $rate"
 
 # If an external MCLK is needed, we need to check if the Pi is compatible.
 if [[ -n "$ext_mclk" ]]; then
@@ -307,16 +307,20 @@ if (( ${#failed_packages[@]} > 0 )); then
 fi
 
 # Install XMOS devicetree overlay
-info "Making and installing XMOS DTO."
-RPI_CONFIG_ROOT=$rpi_config_root make -C $rpi_setup_dir/overlays install
+if [[ -z "$usb_mode" ]]; then
+    info 'Making and installing XMOS DTO.'
+    RPI_CONFIG_ROOT=$rpi_config_root make -C $rpi_setup_dir/overlays install
 
-# Enable XMOS devicetree overlay
-info 'Enabling DTO now.'
-sudo dtoverlay dummy-xmos-device
+    # Enable XMOS devicetree overlay
+    info 'Enabling DTO now.'
+    sudo dtoverlay dummy-xmos-device
+else
+    debug 'UA device, skipping overlay installation.'
+fi
 
 # Copy the udev rules files if device is UA
 if [[ -n "$usb_mode" ]]; then
-    info 'Adding UDEV rules for XMOS devices'
+    info 'Adding UDEV rules for XMOS devices.'
     sudo cp $rpi_setup_dir/resources/99-xmos.rules /etc/udev/rules.d/
 fi
 
