@@ -2,51 +2,36 @@
 
 This repository provides a simple-to-use automated script to configure a Raspberry Pi to use **xCORE VocalFusion** for audio.
 
-> [!WARNING]
-> Configurations that require an external MCLK (e.g. XVF3610) are not currently supported for the Raspberry Pi 5. See compatibility section below.
+The setup script will:
+- Disable built-in audio
+- Enable I2S, I2C (100k baud), and SPI interfaces
+- Update the Raspberry Pi and install required packages
 
-This setup will perform the following operations:
+For INT devices, it will also:
+- Install a devicetree overlay
+- Generate and install an ALSA configuration specific to the XMOS device
+- Create scripts to set up the XMOS device on boot (set up I2S, IO Expander, DAC, and MCLK if necessary)
+- Generate and replace the user's crontab with one that runs those scripts at boot
 
-- enable the I2S, I2C and SPI interfaces
-- update the Raspberry Pi's packages
-- install the required packages
-- install a devicetree overlay for I2S
-- update the asoundrc file to support I2S devices
+For UA devices, it will instead:
+- Add udev rules allowing non-privileged access to the USB interface
 
-For XVF361x-INT devices these actions will be done as well:
-
-- configure MCLK at 12.288 MHz from GPIO4 [see warning below]
-- configure I2S BCLK at 3.072 MHz from GPIO18
-- update the alias for Audacity
-- update the asoundrc file to support I2S devices
-- add a cron job to reset the device at boot up
-- add a cron job to configure the DAC at boot up
-
-For XVF3800 devices these actions will be done as well:
-
-- configure I2S BCLK at 3072kHz from pin 12 (BCM 18)
-- update the alias for Audacity
-- update the asoundrc file to support I2S devices
-- add a cron job to reset the device at boot up
-- add a cron job to configure the IO expander at boot up
-
-<!-- For XVF3800-extmclk devices these actions will be done as well: -->
-<!-- - configure MCLK at 12288kHz from pin 7 (BCM 4) and drive to XVF3800 -->
-
-For XVF3510-UA and XVF361x-UA devices these actions will be done as well:
-
-- update udev rules so that root privileges are not needed to access USB control interface
-
+Finally, the setup will prompt you to restart your Raspberry Pi, this is required to ensure all interfaces are enabled.
 
 ## Compatibility
 
 |                        | Raspberry Pi 4 | Raspberry Pi 5 |
 |------------------------|----------------|----------------|
-| XVF3610-INT            | Yes            | No             |
+| XVF3610-INT            | Yes            | No [^1]        |
 | XVF3610-UA             | Yes            | Yes            |
-| XVF3800-INTDEV-EXTMCLK | Yes            | No             |
+| XVF3800-INTDEV-EXTMCLK | Yes            | No [^1]        |
 | XVF3800-INTDEV         | Yes            | Yes            |
 | XVF3800-UA             | Yes            | Yes            |
+
+[^1]: These configurations are not supported due to missing Raspberry Pi documentation, see [here](https://github.com/raspberrypi/documentation/issues/3285).
+
+> [!NOTE]
+> For cards not listed here, use [v5.8.0](https://github.com/xmos/vocalfusion-rpi-setup/tree/release/v5.8.0).
 
 ## Setup
 
@@ -76,30 +61,11 @@ For XVF3510-UA and XVF361x-UA devices these actions will be done as well:
    git clone https://github.com/xmos/vocalfusion-rpi-setup
    ```
 
-4. Simply run the setup script for your device. Run `./setup.sh -h` for usage.
+4. Simply run the setup script for your device. Run `./setup.sh -h` for full usage.
 
-   For example, for an XVF3800 with 48kHz sample rate:
+   For example, for an XVF3800 in EXTMCLK configuration with 16kHz sample rate:
    ```bash
-   ./setup.sh xvf3800
+   ./setup.sh xvf3800-intdev-extmclk -r16k
    ```
 
    You will be prompted to restart your Raspberry Pi, this will apply options modified in the Raspberry Pi `config.txt` and any ALSA configuration.
-
-## Important note on clocks
-
-> [!TIP]
-> The setup script provides the `-r` flag to configure this for you. You can simply run the script again with a different sample rate and reboot.
-
-The I2S/PCM driver that is provided with raspbian does not support an MCLK output. However the 
-driver does have full ability to set the BCLK and LRCLK correctly for a given sample rate. As 
-the driver does not know about the MCLK it is likely to choose dividers for the clocks generators
-which are not phase locked to the MCLK. The script in this repo gets around this problem by 
-configuring the I2S driver to a certain frequency and then overriding the clock registers to force
-a phase locked frequency.
-
-This will work until a different sample rate is chosen by an application, then the I2S driver will
-write it's own value to the clocks and the MCLK will no longer be phase locked. To solve this problem
-the following steps must be taken before connecting an XVF device with a different sample rate:
-
-1. Take a short recording at the new sample rate: `arecord -c2 -fS32_LE -r{sample_rate} -s1 -Dhw:sndrpisimplecar`
-2. For 48kHz `./resources/clk_dac_setup/setup_blk`, for 16kHz `./resources/clk_dac_setup/setup_blk 16000`
