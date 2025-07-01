@@ -51,9 +51,9 @@ Finally, the setup will prompt you to restart your Raspberry Pi, this is require
 
    Then, choose your SD card and write to it. When prompted, remove the SD card and insert it into the Raspberry Pi.
 
-2. Connect peripherals (keyboard, mouse, speakers/headphones, and display recommended), and power up the system. Refer to the [Getting Started Guide](https://www.raspberrypi.com/documentation/computers/getting-started.html) for your Raspberry Pi.
+2. Connect peripherals (keyboard, mouse, speakers/headphones, and display recommended) and connect your XMOS device as a Pi hat. For UA devices, connect the Pi to the XMOS device via USB.
 
-   Set up locale, username, password, and networking.
+   Refer to the [Getting Started Guide](https://www.raspberrypi.com/documentation/computers/getting-started.html) for your Raspberry Pi.
 
 3. On the Raspberry Pi, clone this GitHub repository:
 
