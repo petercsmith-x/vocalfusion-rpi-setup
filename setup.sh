@@ -402,25 +402,6 @@ if [[ -n "$io_exp_and_dac_setup" ]]; then
   echo "python $rpi_setup_dir/resources/clk_dac_setup/reset_xvf.py $(echo $xmos_device | cut -c1-7)" >> $dac_and_clks_script
 fi
 
-if [[ -n "$io_exp_and_dac_setup" ]]; then
-  audacity_script=$rpi_setup_dir/resources/run_audacity.sh
-  info 'Removing old Audacity script.'
-  rm -f $audacity_script
-
-  info "Creating Audacity script at $audacity_script."
-  echo "#!/usr/bin/env bash" >> $audacity_script
-  echo "/usr/bin/audacity &" >> $audacity_script
-  echo "sleep 5" >> $audacity_script
-  if [[ "$i2s_mode" = "master" ]]; then
-    info "I2S mode is $i2s_mode, adding clock configuration to script."
-  fi
-  sudo chmod +x $audacity_script
-
-  # /usr/local/bin before /usr/bin in PATH
-  info "Moving script from $audacity_script to /usr/local/bin/audacity"
-  sudo mv $audacity_script /usr/local/bin/audacity
-fi
-
 # Regenerate crontab file with new commands
 crontab_file=$rpi_setup_dir/resources/crontab
 if [[ -n "$usb_mode" ]]; then
@@ -433,13 +414,12 @@ info "Removing crontab file $crontab_file"
 rm -f $crontab_file
 
 # Setup the crontab to restart I2S at reboot
-if [[ -n "$i2s_mode" ]] || [[ -n "$io_exp_and_dac_setup" ]]; then
-  if [[ -n "$i2s_mode" ]]; then
+if [[ -n "$i2s_mode" ]]; then
     echo "@reboot sh $i2s_setup_script" >> $crontab_file
-  fi
-  if [[ -n "$io_exp_and_dac_setup" ]]; then
+fi
+
+if [[ -n "$io_exp_and_dac_setup" ]]; then
     echo "@reboot sh $dac_and_clks_script" >> $crontab_file
-  fi
 fi
 
 # Setup the crontab to copy the .asoundrc file at reboot
