@@ -174,7 +174,7 @@ case $xmos_device in
     xvf3610-int)
         i2s_mode=master
         io_exp_and_dac_setup=y
-        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_xvf3610_int
+        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_xvf3610
         ext_mclk=y
         ;;
     xvf3610-ua|xvf3800-ua)
@@ -426,10 +426,8 @@ if [[ -n "$io_exp_and_dac_setup" ]]; then
     debug "Adding MCLK configuration to script."
     echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_mclk"   >> $dac_and_clks_script
   fi
-  
-  # Note that only the substring xvfXXXX from $xmos_device is used in the lines below
+
   echo "python $rpi_setup_dir/resources/clk_dac_setup/setup_io_exp_and_dac.py $xmos_device" >> $dac_and_clks_script
-  echo "python $rpi_setup_dir/resources/clk_dac_setup/reset_xvf.py $(echo $xmos_device | cut -c1-7)" >> $dac_and_clks_script
 
   info 'Running DAC and CLK script now.'
   sh $dac_and_clks_script
