@@ -1,23 +1,34 @@
 #!/usr/bin/env bash
 
-# Go to script location
+# Directory of this script
 rpi_setup_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 
+# Valid/supported device configurations
+valid_xmos_devices=(xvf3800-intdev-extmclk xvf3800-intdev xvf3800-ua xvf3610-int xvf3610-ua)
+
+# Comma and space separate the devices
+printf -v devices_display_string '%s, ' "${valid_xmos_devices[@]}"
+
+# Strip the last comma and space
+devices_display_string="${devices_display_string%, }"
+
+# Packages
+max_install_attempts=3
+packages=(python3-matplotlib python3-numpy libatlas-base-dev audacity libreadline-dev libncurses-dev)
+
+# Additional packages for UA devices
+packages_ua=(libusb-1.0-0-dev libevdev-dev libudev-dev)
+
+# Configurable variables (either set according to device or specified by a flag)
 i2s_mode=
 usb_mode=
 xmos_device=
-rate=48000
-no_update=
-yes_reboot=
-max_install_attempts=3
-valid_xmos_devices=(xvf3800-intdev-extmclk xvf3800-intdev xvf3800-ua xvf3610-int xvf3610-ua)
-printf -v devices_display_string '%s, ' "${valid_xmos_devices[@]}"
-devices_display_string="${devices_display_string%, }"
+rate=48000    # -r flag
+no_update=    # -N flag
+yes_reboot=   # -y flag
 ext_mclk=
 
-packages=(python3-matplotlib python3-numpy libatlas-base-dev audacity libreadline-dev libncurses-dev)
-packages_ua=(libusb-1.0-0-dev libevdev-dev libudev-dev)
-
+# Utility functions for logging
 hint() {
     echo -e "\033[0;95m[HINT]\033[0m $1" >&2
 }
@@ -58,6 +69,7 @@ usage() {
 # Parse args
 temp_err=$(mktemp)
 if ! OPTS=$(getopt -o hvr:Ny --long help,verbose,rate,no-update,yes -n "$0" -- "$@" 2>"$temp_err"); then
+    # Make sure errors are printed nicely and give usage if there are errors
     while IFS=: read -r err_line; do
         error "$(sed 's/.*: //' <<< "$err_line")"
     done < "$temp_err"
@@ -70,8 +82,8 @@ fi
 # Clean up temp file if we succeeded
 rm -f "$temp_err"
 
+# Do stuff based on options
 eval set -- "$OPTS"
-
 while true; do
     case $1 in
         -h|--help)
@@ -106,8 +118,6 @@ while true; do
             ;;
     esac
 done
-
-shift $((OPTIND -1))
 
 # Check for unexpected arguments
 if (( $# < 1 )); then
