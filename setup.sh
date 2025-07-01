@@ -149,7 +149,7 @@ case $xmos_device in
     xvf3610-int)
         i2s_mode=master
         io_exp_and_dac_setup=y
-        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_xvf3610_int
+        asoundrc_template=$rpi_setup_dir/resources/asoundrc_vf_xvf3610
         ext_mclk=y
         ;;
     xvf3610-ua|xvf3800-ua)
