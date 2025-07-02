@@ -18,20 +18,16 @@
             cap: simple-audio-card,dai-link@0 {
                 format = "i2s";
 
-                //! TODO: figure out a way to set up with either. 
-                // rpi as master
+                // RPi as master
                 bitclock-master = <&cap_cpu>;
                 frame-master = <&cap_cpu>;
-                
-                // rpi as slave
-                // bitclock-master = <&cap_codec>;
-                // frame-master = <&cap_codec>;
                 
                 cap_cpu: cpu {
                     sound-dai = <&i2s>;
                     
-                    // stereo
+                    // Stereo
                     dai-tdm-slot-num = <2>;
+                    // 32-Bit
                     dai-tdm-slot-width = <32>;
                 };
 
@@ -44,20 +40,16 @@
             play: simple-audio-card,dai-link@1 {
                 format = "i2s";
 
-                //! TODO: figure out a way to set up with either. 
-                // rpi as master
+                // RPi as master
                 bitclock-master = <&play_cpu>;
                 frame-master = <&play_cpu>;
-                
-                // rpi as slave
-                // bitclock-master = <&play_codec>;
-                // frame-master = <&play_codec>;
                 
                 play_cpu: cpu {
                     sound-dai = <&i2s>;
                     
-                    // stereo
+                    // Stereo
                     dai-tdm-slot-num = <2>;
+                    // 32-Bit
                     dai-tdm-slot-width = <32>;
                 };
 
