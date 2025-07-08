@@ -10,6 +10,7 @@
   * Remove loader driver in favour of device tree overlays
   * Rewrote clock setup using PiGPIO for Pi 4
   * Rewrote ALSA configurations for new device tree overlays
+  * Enable configuration of sample rate via `setup.sh`
 
 ## 5.8.0
 
