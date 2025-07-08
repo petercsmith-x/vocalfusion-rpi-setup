@@ -25,7 +25,7 @@ usb_mode=
 xmos_device=
 rate=48000    # -r flag
 no_update=    # -N flag
-yes_reboot=   # -y flag
+yes_reboot=   # -R flag
 no_reboot=    # -n flag
 ext_mclk=
 
@@ -64,13 +64,13 @@ usage() {
         "    -h|--help         Show this help message." \
         "    -r|--rate <rate>  Set the sample rate to use (Hz), must match the rate of the XMOS software (default: 48000)." \
         "    -N|--no-update    Don't update the Raspberry Pi's packages." \
-        "    -y|--yes-reboot   Say yes to rebooting after setup." \
+        "    -R|--reboot   Say yes to rebooting after setup." \
         "    -n|--no-reboot    Say no to rebooting after setup." >&2
 }
 
 # Parse args
 temp_err=$(mktemp)
-if ! OPTS=$(getopt -o hvr:Nyn --long help,verbose,rate,no-update,yes-reboot,no-reboot -n "$0" -- "$@" 2>"$temp_err"); then
+if ! OPTS=$(getopt -o hvr:NRn --long help,verbose,rate,no-update,reboot,no-reboot -n "$0" -- "$@" 2>"$temp_err"); then
     # Make sure errors are printed nicely and give usage if there are errors
     while IFS=: read -r err_line; do
         error "$(sed 's/.*: //' <<< "$err_line")"
@@ -104,7 +104,7 @@ while true; do
             no_update=y
             shift
             ;;
-        -y|--yes-reboot)
+        -R|--reboot)
             yes_reboot=y
             shift
             ;;
