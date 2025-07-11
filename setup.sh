@@ -183,12 +183,15 @@ case $rate in
     48khz|48k)
         rate=48000
         ;;
+    32khz|32k)
+        rate=32000
+        ;;
     16khz|16k)
         rate=16000
         ;;
     *)
         error "Invalid clock rate: $rate"
-        hint 'Only 16kHz or 48kHz are supported.'
+        hint 'Only 16kHz, 32kHz, or 48kHz are supported.'
         exit 1
         ;;
 esac
