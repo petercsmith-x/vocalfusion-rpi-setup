@@ -16,7 +16,7 @@ pcm.XMOS_I2S_Playback {
             slave {
                 pcm {
                     type hw
-                    card "Device"
+                    card "XMOSDevice"
                     device 0
                 }
                 rate {{rate}}
@@ -26,7 +26,7 @@ pcm.XMOS_I2S_Playback {
         }
         control {
             name "XMOS Playback Volume"
-            card "Device"
+            card "XMOSDevice"
         }
     }
     hint {
@@ -50,7 +50,7 @@ pcm.XMOS_I2S_Capture {
             slave {
                 pcm {
                     type hw
-                    card "Device"
+                    card "XMOSDevice"
                     device 1
                 }
                 rate {{rate}}
@@ -60,7 +60,7 @@ pcm.XMOS_I2S_Capture {
         }
         control {
             name "XMOS Capture Volume"
-            card "Device"
+            card "XMOSDevice"
         }
     }
     hint {
@@ -82,7 +82,7 @@ pcm.!default {
 #
 ctl.!default {
     type hw
-    card "Device"
+    card "XMOSDevice"
 }
 
 #
