@@ -1,4 +1,4 @@
-// Device tree overlay for VocalFusion
+// Device tree overlay for XMOS I2S audio devices
 /dts-v1/;
 /plugin/;
 
@@ -11,7 +11,7 @@
         target = <&sound>;
         __overlay__ {
             compatible = "simple-audio-card";
-            simple-audio-card,name = "XMOS Device";
+            simple-audio-card,name = "XMOSDevice";
             status = "okay";
 
             // Capture

@@ -1,20 +1,20 @@
 RPI_CONFIG_ROOT ?= /boot
 
 .PHONY: all
-all: dummy-xmos-device.dtbo
+all: xmos-device.dtbo
 
-dummy-xmos-device.dtbo: dummy-xmos-device.dts
-	dtc -@ -I dts -O dtb -o dummy-xmos-device.dtbo dummy-xmos-device.dts
+xmos-device.dtbo: xmos-device.dts
+	dtc -@ -I dts -O dtb -o xmos-device.dtbo xmos-device.dts
 
-install: dummy-xmos-device.dtbo
-	sudo cp dummy-xmos-device.dtbo ${RPI_CONFIG_ROOT}/overlays
-	if ! grep -q '^dtoverlay=dummy-xmos-device$$' ${RPI_CONFIG_ROOT}/config.txt; then \
-		echo 'dtoverlay=dummy-xmos-device' | sudo tee -a ${RPI_CONFIG_ROOT}/config.txt; \
+install: xmos-device.dtbo
+	sudo cp xmos-device.dtbo ${RPI_CONFIG_ROOT}/overlays
+	if ! grep -q '^dtoverlay=xmos-device$$' ${RPI_CONFIG_ROOT}/config.txt; then \
+		echo 'dtoverlay=xmos-device' | sudo tee -a ${RPI_CONFIG_ROOT}/config.txt; \
 	fi
 
 uninstall:
-	sudo sed -i '/dtoverlay=dummy-xmos-device/d' ${RPI_CONFIG_ROOT}/config.txt
-	-sudo rm ${RPI_CONFIG_ROOT}/overlays/dummy-xmos-device.dtbo
+	sudo sed -i '/dtoverlay=xmos-device/d' ${RPI_CONFIG_ROOT}/config.txt
+	-sudo rm ${RPI_CONFIG_ROOT}/overlays/xmos-device.dtbo
 
 clean:
 	rm *.dtbo
