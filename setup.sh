@@ -229,7 +229,6 @@ if [[ -n "$ext_mclk" ]]; then
             exit 1
             ;;
         *)
-            break
             ;;
     esac
 fi
