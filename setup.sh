@@ -25,7 +25,9 @@ usb_mode=
 xmos_device=
 rate=48000    # -r flag
 no_update=    # -N flag
-yes_reboot=   # -y flag
+no_packages=  # -p flag
+yes_reboot=   # -R flag
+no_reboot=    # -n flag
 ext_mclk=
 
 # Utility functions for logging
@@ -63,12 +65,14 @@ usage() {
         "    -h|--help         Show this help message." \
         "    -r|--rate <rate>  Set the sample rate to use (Hz), must match the rate of the XMOS software (default: 48000)." \
         "    -N|--no-update    Don't update the Raspberry Pi's packages." \
-        "    -y|--yes          Say yes to rebooting after setup." >&2
+        "    -p|--no-packages  Don't install the required packages." \
+        "    -R|--reboot       Say yes to rebooting after setup." \
+        "    -n|--no-reboot    Say no to rebooting after setup." >&2
 }
 
 # Parse args
 temp_err=$(mktemp)
-if ! OPTS=$(getopt -o hvr:Ny --long help,verbose,rate,no-update,yes -n "$0" -- "$@" 2>"$temp_err"); then
+if ! OPTS=$(getopt -o hvr:NRnp --long help,verbose,rate,no-update,reboot,no-reboot,no-packages -n "$0" -- "$@" 2>"$temp_err"); then
     # Make sure errors are printed nicely and give usage if there are errors
     while IFS=: read -r err_line; do
         error "$(sed 's/.*: //' <<< "$err_line")"
@@ -102,7 +106,11 @@ while true; do
             no_update=y
             shift
             ;;
-        -y|--yes)
+        -p|--no-packages)
+            no_packages=y
+            shift
+            ;;
+        -R|--reboot)
             yes_reboot=y
             shift
             ;;
@@ -291,21 +299,25 @@ if [[ -n "$usb_mode" ]]; then
 fi
 
 # Install required packages
-info "Attempting to install required packages: ${packages[*]}"
-for ((attempt=1; attempt <= max_install_attempts; attempt++)); do
-    # Attempt to install all packages
-    if sudo apt-get install -y ${packages[*]}; then
-        break
-    fi
-    
-    warn "Failed to install required packages, attempt $attempt / $max_install_attempts"
+if [[ -z "$no_packages" ]]; then
+    info "Attempting to install required packages: ${packages[*]}"
+    for ((attempt=1; attempt <= max_install_attempts; attempt++)); do
+        # Attempt to install all packages
+        if sudo apt-get install -y ${packages[*]}; then
+            break
+        fi
+        
+        warn "Failed to install required packages, attempt $attempt / $max_install_attempts"
 
-    # Increasingly sleep between attempts
-    if (( attempt != max_install_attempts )); then
-        debug "Sleeping for $((attempt * 2)) seconds..."
-        sleep $((attempt * 2))
-    fi
-done
+        # Increasingly sleep between attempts
+        if (( attempt != max_install_attempts )); then
+            debug "Sleeping for $((attempt * 2)) seconds..."
+            sleep $((attempt * 2))
+        fi
+    done
+else
+    info 'Skipping package install as --no-packages used.'
+fi
 
 info 'Checking required packages are installed.'
 
