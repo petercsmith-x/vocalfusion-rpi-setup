@@ -119,6 +119,13 @@ while true; do
     esac
 done
 
+if [[ -n "$no_reboot" && -n "$yes_reboot" ]]; then
+    error "Incompatible reboot flags."
+    echo
+    usage
+    exit 1
+fi
+
 # Check for unexpected arguments
 if (( $# < 1 )); then
     error 'Device type is required.'
