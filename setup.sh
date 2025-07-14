@@ -408,7 +408,7 @@ if [[ -n "$i2s_mode" ]]; then
         # wait a bit as it doesn't work otherwise, this is probably caused
         # by the same process that is deleting .asoundrc
         echo "sleep 15"                                         >> $i2s_setup_script
-        echo "arecord -Dhw:CARD=Device,DEV=0 -c2 -fS32_LE -r$rate -s1 /dev/null" >> $i2s_setup_script
+        echo "arecord -Dhw:XMOSDevice,0 -c2 -fS32_LE -r$rate -s1 /dev/null" >> $i2s_setup_script
     fi
 fi
 
@@ -432,6 +432,9 @@ if [[ -n "$io_exp_and_dac_setup" ]]; then
   # Note that only the substring xvfXXXX from $xmos_device is used in the lines below
   echo "python $rpi_setup_dir/resources/clk_dac_setup/setup_io_exp_and_dac.py $xmos_device" >> $dac_and_clks_script
   echo "python $rpi_setup_dir/resources/clk_dac_setup/reset_xvf.py $(echo $xmos_device | cut -c1-7)" >> $dac_and_clks_script
+
+  info 'Running DAC and CLK script now.'
+  sh $dac_and_clks_script
 fi
 
 # Regenerate crontab file with new commands
