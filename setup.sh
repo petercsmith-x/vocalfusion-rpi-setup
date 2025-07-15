@@ -423,8 +423,8 @@ if [[ -n "$io_exp_and_dac_setup" ]]; then
 
   info "Creating DAC and CLK setup script: $dac_and_clks_script."
   # Configure the clocks only if RaspberryPi is configured as I2S master
-  if [[ "$i2s_mode" = "master" ]]; then
-    debug "I2S mode is $i2s_mode, adding clock configuration to script."
+  if [[ -n "$ext_mclk" ]]; then
+    debug "Adding MCLK configuration to script."
     echo "sudo $rpi_setup_dir/resources/clk_dac_setup/setup_mclk"   >> $dac_and_clks_script
   fi
   
