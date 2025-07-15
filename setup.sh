@@ -63,7 +63,7 @@ usage() {
         "Options:" \
         "    -v|--verbose      Increase verbosity (multiple for more detail)." \
         "    -h|--help         Show this help message." \
-        "    -r|--rate <rate>  Set the sample rate to use (Hz), must match the rate of the XMOS software (default: 48000)." \
+        "    -r|--rate <rate>  Set the sample rate to use (Hz), must match the rate of the XMOS software (default: 48000). Does not affect UA devices." \
         "    -N|--no-update    Don't update the Raspberry Pi's packages." \
         "    -p|--no-packages  Don't install the required packages." \
         "    -R|--reboot       Say yes to rebooting after setup." \
