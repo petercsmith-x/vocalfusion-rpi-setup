@@ -47,9 +47,9 @@ static volatile uint32_t piPeriphBase = 0x20000000;
 // GPIO modes
 // https://www.raspberrypi.org/app/uploads/2012/02/BCM2835-ARM-Peripherals.pdf
 // Table 6.2
-#define PI_INPUT 0b000
-#define PI_OUTPUT 0b001
-#define PI_ALT0 0b100
+#define PI_INPUT 0
+#define PI_OUTPUT 1
+#define PI_ALT0 4
 
 static volatile uint32_t *gpioReg = MAP_FAILED;
 static volatile uint32_t *clkReg = MAP_FAILED;
@@ -63,7 +63,7 @@ void gpioSetMode(unsigned gpio, unsigned mode) {
   int shift = (gpio % 10) * 3;
 
   // Clear and set new mode on pin
-  gpioReg[reg] = (gpioReg[reg] & ~(0b111 << shift)) | (mode << shift);
+  gpioReg[reg] = (gpioReg[reg] & ~(7 << shift)) | (mode << shift);
 }
 
 unsigned getGpioHardwareRevision(void) {
