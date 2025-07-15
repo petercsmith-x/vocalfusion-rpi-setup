@@ -8,7 +8,7 @@
   * Added support for 64-bit Bookworm Raspberry Pi OS
   * Added partial support for Pi 5, see `README.md` for compatibility
   * Remove loader driver in favour of device tree overlays
-  * Rewrote clock setup using PiGPIO for Pi 4
+  * Cleaned up MCLK setup for Pi 4 and below
   * Rewrote ALSA configurations for new device tree overlays
   * Enable configuration of sample rate via `setup.sh`
 
