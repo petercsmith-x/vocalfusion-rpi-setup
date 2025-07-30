@@ -369,9 +369,8 @@ if [[ -n "$asoundrc_template" ]]; then
     fi
 
     # Create new asoundrc with specified rate
-    info "Generating asoundrc with specified rate at ${asoundrc_template}_$rate"
-    sed "s/{{rate}}/$rate/g" "$asoundrc_template" > "${asoundrc_template}_$rate"
-    asoundrc_template="${asoundrc_template}_$rate"
+    info "Generating asoundrc with specified rate at ${asoundrc_template}"
+    sed "s/{{rate}}/$rate/g" "$asoundrc_template.template" > "${asoundrc_template}"
 
     # Copy asoundrc config to correct location
     info "Copying asoundrc: $asoundrc_template to ~/.asoundrc"
@@ -461,7 +460,7 @@ fi
 # This is needed to address the known issue in Raspian Buster:
 # https://forums.raspberrypi.com/viewtopic.php?t=295008
 if [[ -n "$asoundrc_template" ]]; then
-    echo "@reboot sleep 20 && cp $asoundrc_template ~/.asoundrc" >> $crontab_file
+    echo "@reboot cp $asoundrc_template ~/.asoundrc && sleep 20 && cp $asoundrc_template ~/.asoundrc" >> $crontab_file
 fi
 
 debug "New crontab file:\n$(<$crontab_file)"
