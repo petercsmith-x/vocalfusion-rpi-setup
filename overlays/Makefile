@@ -15,9 +15,6 @@ install: xmos-device.dtbo
 uninstall:
 	sudo sed -i '/dtoverlay=xmos-device/d' ${RPI_CONFIG_ROOT}/config.txt
 	-sudo rm ${RPI_CONFIG_ROOT}/overlays/xmos-device.dtbo
-	if ! grep -q '^dtoverlay=xmos-device$$' ${RPI_CONFIG_ROOT}/config.txt; then \
-		echo 'dtoverlay=xmos-device' | sudo tee -a ${RPI_CONFIG_ROOT}/config.txt; \
-	fi
 
 clean:
 	rm *.dtbo
