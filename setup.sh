@@ -26,7 +26,7 @@ xmos_device=
 rate=48000    # -r flag
 no_update=    # -N flag
 no_packages=  # -p flag
-yes_reboot=   # -y flag
+yes_reboot=   # -R flag
 no_reboot=    # -n flag
 ext_mclk=
 
@@ -66,13 +66,13 @@ usage() {
         "    -r|--rate <rate>  Set the sample rate to use (Hz), must match the rate of the XMOS software (default: 48000). Does not affect UA devices." \
         "    -N|--no-update    Don't update the Raspberry Pi's packages." \
         "    -p|--no-packages  Don't install the required packages." \
-        "    -y|--yes-reboot   Say yes to rebooting after setup." \
+        "    -R|--reboot       Say yes to rebooting after setup." \
         "    -n|--no-reboot    Say no to rebooting after setup." >&2
 }
 
 # Parse args
 temp_err=$(mktemp)
-if ! OPTS=$(getopt -o hvr:Nynp --long help,verbose,rate,no-update,yes-reboot,no-reboot,no-packages -n "$0" -- "$@" 2>"$temp_err"); then
+if ! OPTS=$(getopt -o hvr:NRnp --long help,verbose,rate,no-update,reboot,no-reboot,no-packages -n "$0" -- "$@" 2>"$temp_err"); then
     # Make sure errors are printed nicely and give usage if there are errors
     while IFS=: read -r err_line; do
         error "$(sed 's/.*: //' <<< "$err_line")"
@@ -110,7 +110,7 @@ while true; do
             no_packages=y
             shift
             ;;
-        -y|--yes-reboot)
+        -R|--reboot)
             yes_reboot=y
             shift
             ;;
