@@ -19,8 +19,17 @@ static int setupMCLK(unsigned source_clk_khz, unsigned target_freq_hz,
   clkReg[CLK_GP0_CTL] = CLK_PASSWD | CLK_CTL_KILL;
 
   // Wait for clock to stop
-  while (clkReg[CLK_GP0_CTL] & CLK_CTL_BUSY) {
+  // 500,000 iterations is around half a second
+  unsigned int max_wait_iters = 500000;
+  unsigned int wait_iters = 0;
+  while ((clkReg[CLK_GP0_CTL] & CLK_CTL_BUSY) && wait_iters < max_wait_iters) {
     usleep(10);
+    wait_iters++;
+  }
+
+  if (wait_iters >= max_wait_iters) {
+      fprintf(stderr, "Error: clock didn't stop after %d iterations (max: %d)\n", wait_iters, max_wait_iters);
+      exit(1);
   }
 
   // Set the divider
