@@ -63,9 +63,19 @@ Finally, the setup will prompt you to restart your Raspberry Pi, this is require
 
 4. Simply run the setup script for your device. Run `./setup.sh -h` for full usage.
 
-   For example, for an XVF3800 in EXTMCLK configuration with 16kHz sample rate:
+   For example, an XVF3800 in intdev configuration with a 48kHz sample rate (the default sample rate):
+   ```bash
+   ./setup.sh xvf3800-intdev
+   ```
+
+   or, for an XVF3800 in EXTMCLK configuration with 16kHz sample rate:
    ```bash
    ./setup.sh xvf3800-intdev-extmclk -r16k
+   ```
+
+   For more options, run:
+   ```bash
+   ./setup.sh --help
    ```
 
    You will be prompted to restart your Raspberry Pi, this will apply options modified in the Raspberry Pi `config.txt` and any ALSA configuration.
