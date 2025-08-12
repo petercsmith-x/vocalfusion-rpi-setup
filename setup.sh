@@ -447,6 +447,7 @@ fi
 
 info "Removing crontab file $crontab_file"
 rm -f $crontab_file
+touch $crontab_file
 
 # Setup the crontab to restart I2S at reboot
 if [[ -n "$i2s_mode" ]]; then
