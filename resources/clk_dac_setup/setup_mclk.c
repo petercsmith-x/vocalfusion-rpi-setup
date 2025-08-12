@@ -19,8 +19,9 @@ static int setupMCLK(unsigned source_clk_khz, unsigned target_freq_hz,
   clkReg[CLK_GP0_CTL] = CLK_PASSWD | CLK_CTL_KILL;
 
   // Wait for clock to stop
-  // 500,000 iterations is around half a second
-  unsigned int max_wait_iters = 500000;
+  // 10,000 iterations seems to take ~1s, though usually the clock will have
+  // stopped on the first iteration.
+  unsigned int max_wait_iters = 10000;
   unsigned int wait_iters = 0;
   while ((clkReg[CLK_GP0_CTL] & CLK_CTL_BUSY) && wait_iters < max_wait_iters) {
     usleep(10);
